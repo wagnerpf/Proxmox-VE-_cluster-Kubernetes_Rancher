@@ -1,0 +1,46 @@
+---
+- name: Adicionar chave GPG do Docker
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Adicionar repositório Docker
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+
+- name: Instalar Docker
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+
+- name: Configurar containerd
+  template:
+    src: containerd-config.toml.j2
+    dest: /etc/containerd/config.toml
+  notify:
+    - restart containerd
+
+- name: Adicionar usuário ao grupo docker
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+
+- name: Habilitar e iniciar Docker
+  systemd:
+    name: docker
+    enabled: yes
+    state: started
+
+- name: Habilitar e iniciar containerd
+  systemd:
+    name: containerd
+    enabled: yes
+    state: started

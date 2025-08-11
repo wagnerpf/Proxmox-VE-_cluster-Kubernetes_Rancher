@@ -1,0 +1,36 @@
+---
+- name: Preparar todos os nós
+  hosts: all
+  become: yes
+  roles:
+    - common
+
+- name: Instalar Docker em todos os nós
+  hosts: all
+  become: yes
+  roles:
+    - docker
+
+- name: Instalar Kubernetes em todos os nós
+  hosts: all
+  become: yes
+  roles:
+    - kubernetes
+
+- name: Configurar masters
+  hosts: masters
+  become: yes
+  roles:
+    - kubernetes-master
+
+- name: Configurar workers
+  hosts: workers
+  become: yes
+  roles:
+    - kubernetes-worker
+
+- name: Instalar Rancher
+  hosts: masters[0]
+  become: yes
+  roles:
+    - rancher

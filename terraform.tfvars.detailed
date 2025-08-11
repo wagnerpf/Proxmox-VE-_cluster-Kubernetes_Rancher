@@ -1,0 +1,69 @@
+# Configuração completa para Proxmox + Kubernetes
+
+## 1. PROXMOX - Configurações Obrigatórias
+# URL da API do seu Proxmox (substitua pelo IP real)
+proxmox_api_url = "https://192.168.1.100:8006/api2/json"
+
+# Token de API (criar em Datacenter > Permissions > API Tokens)
+proxmox_api_token_id     = "root@pam!terraform"
+proxmox_api_token_secret = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# Nome do nó Proxmox (verificar em Datacenter > Nodes)
+proxmox_node = "proxmox-node1"
+
+# Pool de armazenamento (verificar em Datacenter > Storage)
+storage_pool = "local-lvm"
+
+## 2. TEMPLATE - Deve existir no Proxmox
+# Nome do template Ubuntu 24.04 (criar conforme README)
+template_name = "ubuntu-22.04-cloud"
+
+## 3. CLUSTER - Configurações do Kubernetes
+cluster_name = "production-k8s"
+master_count = 1
+worker_count = 3
+
+## 4. HARDWARE - Recursos das VMs
+# Master nodes (mínimo recomendado)
+master_memory    = 4096  # 4GB RAM
+master_cpu       = 2     # 2 CPUs
+master_disk_size = "50G" # 50GB disco
+
+# Worker nodes (ajustar conforme necessidade)
+worker_memory    = 8192   # 8GB RAM
+worker_cpu       = 4      # 4 CPUs
+worker_disk_size = "100G" # 100GB disco
+
+## 5. REDE - Configurações de rede (ajustar para sua rede)
+network_bridge  = "vmbr0"              # Bridge padrão do Proxmox
+network_cidr    = "192.168.1.0/24"     # Rede das VMs
+network_gateway = "192.168.1.1"        # Gateway da rede
+dns_servers     = "8.8.8.8,8.8.4.4"   # Servidores DNS
+search_domain   = "local"              # Domínio de busca
+
+## 6. USUÁRIO - Configurações de login
+vm_user     = "ubuntu"    # Usuário padrão
+vm_password = "ubuntu123" # Senha (recomenda-se usar apenas SSH)
+
+## 7. SSH - Chaves SSH (OBRIGATÓRIO)
+# Sua chave SSH pública (cat ~/.ssh/id_rsa.pub)
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDExample... seu-usuario@hostname"
+
+# Caminho para sua chave SSH privada
+ssh_private_key_path = "~/.ssh/id_rsa"
+
+## EXEMPLO DE IPs QUE SERÃO ATRIBUÍDOS:
+# Com network_cidr = "192.168.1.0/24":
+# - Master 1: 192.168.1.10
+# - Worker 1: 192.168.1.20
+# - Worker 2: 192.168.1.21
+# - Worker 3: 192.168.1.22
+
+## CHECKLIST ANTES DE EXECUTAR:
+# [ ] Proxmox funcionando e acessível
+# [ ] Template ubuntu-22.04-cloud criado
+# [ ] Token de API criado e testado
+# [ ] Chave SSH gerada e configurada
+# [ ] Rede configurada conforme network_cidr
+# [ ] Recursos suficientes no Proxmox
+# [ ] Internet disponível nas VMs

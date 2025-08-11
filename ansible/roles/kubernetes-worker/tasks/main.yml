@@ -1,0 +1,18 @@
+---
+- name: Obter comando de join do master
+  slurp:
+    src: "/tmp/kubernetes-join-command"
+  register: join_command
+  delegate_to: "{{ groups['masters'][0] }}"
+
+- name: Verificar se nó já está no cluster
+  command: kubectl get nodes {{ ansible_hostname }}
+  delegate_to: "{{ groups['masters'][0] }}"
+  become_user: "{{ hostvars[groups['masters'][0]]['ansible_user'] }}"
+  register: node_exists
+  failed_when: false
+  changed_when: false
+
+- name: Fazer join no cluster
+  command: "{{ join_command.content | b64decode | trim }}"
+  when: node_exists.rc != 0

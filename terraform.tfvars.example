@@ -1,0 +1,60 @@
+# ========================================
+# CONFIGURAÇÕES DO PROXMOX VE - OBRIGATÓRIO
+# ========================================
+proxmox_api_url          = "https://your-proxmox-server.domain.com:8006/api2/json"
+proxmox_api_token_id     = "your-user@pve!your-token-name"
+proxmox_api_token_secret = "your-token-secret-here"
+proxmox_tls_insecure     = true
+proxmox_node             = "your-proxmox-node"
+
+# ========================================
+# CONFIGURAÇÕES DO AMBIENTE
+# ========================================
+environment = "production"  # development, staging, production
+
+# ========================================
+# CONFIGURAÇÕES DO CLUSTER
+# ========================================
+cluster_name = "my-k8s-cluster"
+master_count = 1
+worker_count = 2
+
+# Template Ubuntu (deve ser criado previamente no Proxmox)
+template_name = "ubuntu-22.04-cloud"
+
+# ========================================
+# CONFIGURAÇÕES DE REDE
+# ========================================
+network_bridge  = "vmbr0"
+network_gateway = "192.168.1.1"
+dns_servers     = "8.8.8.8,8.8.4.4"
+search_domain   = "local"
+
+# IPs fixos para os nós
+master_ips = ["192.168.1.10"]
+worker_ips = ["192.168.1.20", "192.168.1.21"]
+
+# ========================================
+# CONFIGURAÇÕES DE SEGURANÇA
+# ========================================
+ssh_public_key_path = "~/.ssh/k8s-cluster-key.pub"
+vm_user             = "ubuntu"
+vm_password         = "your-secure-password"
+
+# ========================================
+# CONFIGURAÇÕES DE HARDWARE
+# ========================================
+# Masters
+master_memory    = 8192   # 8GB RAM
+master_cpu       = 4      # 4 vCPUs
+master_disk_size = "80G"
+
+# Workers
+worker_memory    = 16384  # 16GB RAM
+worker_cpu       = 4      # 4 vCPUs
+worker_disk_size = "100G"
+
+# ========================================
+# CONFIGURAÇÕES DE ARMAZENAMENTO
+# ========================================
+storage_pool = "local-lvm"

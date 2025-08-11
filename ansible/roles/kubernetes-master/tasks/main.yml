@@ -1,0 +1,66 @@
+---
+- name: Verificar se cluster já existe
+  stat:
+    path: /etc/kubernetes/admin.conf
+  register: cluster_exists
+
+- name: Inicializar cluster Kubernetes
+  command: >
+    kubeadm init
+    --apiserver-advertise-address={{ apiserver_advertise_address }}
+    --pod-network-cidr={{ pod_network_cidr }}
+    --service-cidr={{ service_cidr }}
+    --cri-socket=unix:///var/run/containerd/containerd.sock
+  when: not cluster_exists.stat.exists
+  register: kubeadm_init
+
+- name: Criar diretório .kube para usuário
+  file:
+    path: "/home/{{ ansible_user }}/.kube"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Copiar kubeconfig para usuário
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "/home/{{ ansible_user }}/.kube/config"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+    remote_src: yes
+
+- name: Aguardar API server ficar disponível
+  wait_for:
+    port: 6443
+    host: "{{ apiserver_advertise_address }}"
+    delay: 10
+    timeout: 300
+
+- name: Instalar Flannel CNI via kubectl
+  shell: |
+    export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
+    kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+  become_user: "{{ ansible_user }}"
+  when: not cluster_exists.stat.exists
+
+- name: Gerar comando de join
+  command: kubeadm token create --print-join-command
+  register: join_command_raw
+  when: not cluster_exists.stat.exists
+
+- name: Salvar comando de join
+  copy:
+    content: "{{ join_command_raw.stdout }}"
+    dest: "/tmp/kubernetes-join-command"
+    mode: '0644'
+  when: join_command_raw is defined
+
+- name: Aguardar pods do sistema ficarem prontos
+  shell: |
+    export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
+    kubectl wait --for=condition=Ready pod --all -n kube-system --timeout=300s
+  become_user: "{{ ansible_user }}"
+  retries: 3
+  delay: 30

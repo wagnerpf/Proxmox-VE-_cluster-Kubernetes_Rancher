@@ -1,0 +1,23 @@
+---
+# Configurações globais do cluster
+cluster_name: "{{ cluster_name | default('k8s-cluster') }}"
+pod_network_cidr: "10.244.0.0/16"
+service_cidr: "10.96.0.0/12"
+
+# Configurações do Kubernetes
+kubernetes_version: "1.28.2"
+kubernetes_cni: "flannel"
+
+# Configurações do Docker
+docker_version: "24.0.5"
+
+# Configurações do Rancher
+rancher_version: "v2.7.5"
+rancher_hostname: "rancher.local"
+rancher_bootstrap_password: "admin123"
+
+# Configurações de certificados
+cert_manager_version: "v1.12.3"
+
+# Configurações de rede
+apiserver_advertise_address: "{{ ansible_default_ipv4.address }}"

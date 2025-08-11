@@ -1,0 +1,91 @@
+---
+- name: Verificar se Helm está instalado
+  command: which helm
+  register: helm_check
+  failed_when: false
+
+- name: Instalar Helm se necessário
+  shell: |
+    curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+    echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+    sudo apt update
+    sudo apt install -y helm
+  when: helm_check.rc != 0
+
+- name: Adicionar repositório Helm jetstack
+  shell: |
+    export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
+    helm repo add jetstack https://charts.jetstack.io
+    helm repo update
+  become_user: "{{ ansible_user }}"
+
+- name: Adicionar repositório Rancher
+  shell: |
+    export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
+    helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+    helm repo update
+  become_user: "{{ ansible_user }}"
+
+- name: Instalar cert-manager
+  shell: |
+    export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+  become_user: "{{ ansible_user }}"
+
+- name: Aguardar cert-manager ficar pronto
+  shell: |
+    export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
+    kubectl wait --for=condition=available --timeout=300s deployment/cert-manager -n cert-manager
+    kubectl wait --for=condition=available --timeout=300s deployment/cert-manager-webhook -n cert-manager
+  become_user: "{{ ansible_user }}"
+  retries: 3
+  delay: 30
+
+- name: Criar namespace cattle-system
+  shell: |
+    export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
+    kubectl create namespace cattle-system --dry-run=client -o yaml | kubectl apply -f -
+  become_user: "{{ ansible_user }}"
+
+- name: Instalar Rancher
+  shell: |
+    export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
+    helm install rancher rancher-latest/rancher \
+      --namespace cattle-system \
+      --set hostname={{ rancher_hostname }} \
+      --set bootstrapPassword={{ rancher_bootstrap_password }} \
+      --set ingress.tls.source=rancher \
+      --timeout=10m
+  become_user: "{{ ansible_user }}"
+
+- name: Aguardar Rancher ficar pronto
+  shell: |
+    export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
+    kubectl wait --for=condition=ready pod -l app=rancher -n cattle-system --timeout=600s
+  become_user: "{{ ansible_user }}"
+  retries: 5
+  delay: 60
+
+- name: Criar port-forward para Rancher
+  shell: |
+    export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
+    nohup kubectl port-forward --address 0.0.0.0 -n cattle-system svc/rancher 8443:443 > /tmp/rancher-port-forward.log 2>&1 &
+    echo "Port-forward criado na porta 8443"
+  become_user: "{{ ansible_user }}"
+
+- name: Exibir informações de acesso
+  debug:
+    msg: |
+      🎉 Rancher instalado com sucesso!
+      
+      📋 Informações de acesso:
+      🌐 URL: https://{{ ansible_default_ipv4.address }}:8443
+      👤 Usuário: admin
+      🔑 Senha: {{ rancher_bootstrap_password }}
+      
+      💡 Adicione ao seu /etc/hosts (opcional):
+      {{ ansible_default_ipv4.address }} {{ rancher_hostname }}
+      
+      🔧 Comandos úteis:
+      kubectl get pods -n cattle-system
+      kubectl logs -n cattle-system deployment/rancher
