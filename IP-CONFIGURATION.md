@@ -6,37 +6,37 @@
 ```hcl
 # terraform.tfvars
 ip_assignment_mode = "auto"  # ou omitir (é o padrão)
-network_cidr       = "192.168.1.0/24"
+network_cidr       = "<SEU_CIDR>"
 
 # IPs serão:
-# Master:  192.168.1.10
-# Worker1: 192.168.1.20
-# Worker2: 192.168.1.21
+# Master:  <exemplo: 192.168.1.10>
+# Worker1: <exemplo: 192.168.1.20>
+# Worker2: <exemplo: 192.168.1.21>
 ```
 
 ### **Opção 2: IPs Específicos (Manual)**
 ```hcl
 # terraform.tfvars
 ip_assignment_mode = "manual"
-network_cidr       = "192.168.1.0/24"
+network_cidr       = "<SEU_CIDR>"
 
 # IPs específicos
-master_ips = ["192.168.1.15"]
-worker_ips = ["192.168.1.25", "192.168.1.26"]
+master_ips = ["<IP_MASTER>"]
+worker_ips = ["<IP_WORKER1>", "<IP_WORKER2>"]
 ```
 
 ### **Opção 3: IPs Automáticos Personalizados**
 ```hcl
 # terraform.tfvars
 ip_assignment_mode    = "auto"
-network_cidr          = "172.17.176.0/24"
-auto_ip_start_master  = 50  # Master começará em .50
-auto_ip_start_worker  = 100 # Workers começarão em .100
+network_cidr          = "<SEU_CIDR>"
+auto_ip_start_master  = <INICIO_MASTER>
+auto_ip_start_worker  = <INICIO_WORKER>
 
 # IPs serão:
-# Master:  172.17.176.50
-# Worker1: 172.17.176.100
-# Worker2: 172.17.176.101
+# Master:  <exemplo: 192.168.1.50>
+# Worker1: <exemplo: 192.168.1.100>
+# Worker2: <exemplo: 192.168.1.101>
 ```
 
 ## 📋 Configuração Atual (Baseada no seu variables.tf)
@@ -44,14 +44,14 @@ auto_ip_start_worker  = 100 # Workers começarão em .100
 Com suas configurações atuais:
 ```hcl
 # Seus valores atuais
-network_cidr = "172.17.176.0/24"
-master_count = 1
-worker_count = 2
+network_cidr = "<SEU_CIDR>"
+master_count = <QTD_MASTERS>
+worker_count = <QTD_WORKERS>
 
 # IPs automáticos resultantes:
-# Master 1: 172.17.176.10
-# Worker 1: 172.17.176.20
-# Worker 2: 172.17.176.21
+# Master 1: <exemplo: 192.168.1.10>
+# Worker 1: <exemplo: 192.168.1.20>
+# Worker 2: <exemplo: 192.168.1.21>
 ```
 
 ## 🛠️ Cenários Comuns
@@ -59,8 +59,8 @@ worker_count = 2
 ### **Cenário 1: Produção com IPs fixos conhecidos**
 ```hcl
 ip_assignment_mode = "manual"
-master_ips = ["172.17.176.50"]
-worker_ips = ["172.17.176.60", "172.17.176.61", "172.17.176.62"]
+master_ips = ["<IP_MASTER>"]
+worker_ips = ["<IP_WORKER1>", "<IP_WORKER2>", "<IP_WORKER3>"]
 master_count = 1
 worker_count = 3
 ```
@@ -68,17 +68,17 @@ worker_count = 3
 ### **Cenário 2: Desenvolvimento com IPs automáticos**
 ```hcl
 ip_assignment_mode = "auto"
-network_cidr = "192.168.100.0/24"
-auto_ip_start_master = 10
-auto_ip_start_worker = 20
+network_cidr = "<SEU_CIDR>"
+auto_ip_start_master = <INICIO_MASTER>
+auto_ip_start_worker = <INICIO_WORKER>
 ```
 
 ### **Cenário 3: Laboratório com range específico**
 ```hcl
 ip_assignment_mode = "auto"
-network_cidr = "10.0.1.0/24"
-auto_ip_start_master = 100
-auto_ip_start_worker = 200
+network_cidr = "<SEU_CIDR>"
+auto_ip_start_master = <INICIO_MASTER>
+auto_ip_start_worker = <INICIO_WORKER>
 ```
 
 ## 🔍 Verificar IPs antes de aplicar
@@ -102,25 +102,24 @@ O sistema valida automaticamente:
 
 ## 🚀 Exemplos Prontos
 
-### **Para sua rede atual (CEFET):**
+### **Modo automático (recomendado)**
 ```hcl
-# Modo automático (recomendado)
 ip_assignment_mode = "auto"
-network_cidr = "172.17.176.0/24"
-network_gateway = "172.17.176.1"
+network_cidr = "<SEU_CIDR>"
+network_gateway = "<SEU_GATEWAY>"
 
 # Resultado:
-# Master:  172.17.176.10
-# Worker1: 172.17.176.20
-# Worker2: 172.17.176.21
+# Master:  <exemplo: 192.168.1.10>
+# Worker1: <exemplo: 192.168.1.20>
+# Worker2: <exemplo: 192.168.1.21>
 ```
 
 ### **Modo manual para IPs específicos:**
 ```hcl
 ip_assignment_mode = "manual"
-network_cidr = "172.17.176.0/24"
-master_ips = ["172.17.176.50"]
-worker_ips = ["172.17.176.60", "172.17.176.61"]
+network_cidr = "<SEU_CIDR>"
+master_ips = ["<IP_MASTER>"]
+worker_ips = ["<IP_WORKER1>", "<IP_WORKER2>"]
 ```
 
 ---
@@ -130,8 +129,8 @@ worker_ips = ["172.17.176.60", "172.17.176.61"]
 Para sua situação, sugiro **manter o modo automático** que já está funcionando bem. Se precisar de IPs específicos no futuro, é só alterar para modo manual.
 
 **Seus IPs atuais (automáticos):**
-- Master: `172.17.176.10`
-- Worker 1: `172.17.176.20`
-- Worker 2: `172.17.176.21`
+- Master: `<IP_MASTER>`
+- Worker 1: `<IP_WORKER1>`
+- Worker 2: `<IP_WORKER2>`
 
 Estes IPs são calculados automaticamente e funcionam perfeitamente! 🎯
