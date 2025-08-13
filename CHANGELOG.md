@@ -7,7 +7,7 @@
 #### ✨ **Documentação Reescrita e Reorganizada**
 
 ##### **1. README.md - Reestruturação Completa**
-- **📊 Arquitetura visual**: Diagrama Mermaid com topologia atual do CEFETES
+- **📊 Arquitetura visual**: Diagrama Mermaid com topologia atual do 
 - **🎯 Foco no objetivo**: Seções claras para diferentes públicos
 - **📋 Configuração específica**: IPs e configurações do ambiente real
 - **⚡ Instalação simplificada**: Fluxo mais claro e direto
