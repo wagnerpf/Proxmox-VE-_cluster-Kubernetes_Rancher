@@ -28,9 +28,9 @@ locals {
 
   # Tags padrão para todas as VMs
   common_tags = [
-    "environment=${var.environment}",
-    "project=${var.cluster_name}",
-    "managed-by=terraform"
+    "environment-${var.environment}",
+    "project-${var.cluster_name}",
+    "managed-by-terraform"
   ]
 
   # Path da chave SSH (configurável via variável)
@@ -86,7 +86,7 @@ resource "proxmox_vm_qemu" "k8s_master" {
 
   # Configurações básicas
   agent  = 1
-  tags   = join(";", concat(local.common_tags, ["kubernetes", "master", "node-type=control-plane"]))
+  tags   = join(";", concat(local.common_tags, ["kubernetes", "master", "control-plane"]))
   onboot = true
 }
 
@@ -139,7 +139,7 @@ resource "proxmox_vm_qemu" "k8s_worker" {
 
   # Configurações básicas
   agent  = 1
-  tags   = join(";", concat(local.common_tags, ["kubernetes", "worker", "node-type=worker"]))
+  tags   = join(";", concat(local.common_tags, ["kubernetes", "worker", "worker-node"]))
   onboot = true
 
   # Dependência dos masters

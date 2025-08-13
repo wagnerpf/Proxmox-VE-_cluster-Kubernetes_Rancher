@@ -5,17 +5,17 @@
 variable "proxmox_api_url" {
   description = "URL da API do Proxmox VE"
   type        = string
-  default     = "https://your-proxmox-server.domain.com:8006/api2/json"
+  default     = "https://exemplo.com:8006/api2/json"
 }
 
 variable "proxmox_api_token_id" {
-  description = "ID do token da API do Proxmox VE"
+  description = "ID do token de API do Proxmox VE (formato: user@pve!token-name)"
   type        = string
   sensitive   = true
 }
 
 variable "proxmox_api_token_secret" {
-  description = "Secret do token da API do Proxmox VE"
+  description = "Secret do token de API do Proxmox VE"
   type        = string
   sensitive   = true
 }
@@ -29,7 +29,7 @@ variable "proxmox_tls_insecure" {
 variable "proxmox_node" {
   description = "Nome do nó Proxmox onde criar as VMs"
   type        = string
-  default     = "proxmox-node1"
+  default     = "nome do nó"
 }
 
 # ========================================
@@ -92,7 +92,7 @@ variable "master_memory" {
 variable "master_cpu" {
   description = "Número de CPUs para nós master"
   type        = number
-  default     = 10
+  default     = 4
 
   validation {
     condition     = var.master_cpu >= 2 && var.master_cpu <= 16
@@ -125,7 +125,7 @@ variable "worker_cpu" {
 variable "worker_disk_size" {
   description = "Tamanho do disco para nós worker"
   type        = string
-  default     = "100G"
+  default     = "50G"
 }
 
 # ========================================
@@ -147,7 +147,7 @@ variable "network_gateway" {
 variable "dns_servers" {
   description = "Servidores DNS"
   type        = string
-  default     = "8.8.8.8,8.8.4.4"
+  default     = "8.8.4.4"
 }
 
 variable "search_domain" {
@@ -169,7 +169,7 @@ variable "master_ips" {
 variable "worker_ips" {
   description = "IPs específicos para workers"
   type        = list(string)
-  default     = ["192.168.1.20", "192.168.1.21"]
+  default     = ["192.168.1.35", "192.168.1.36"]
 }
 
 # ========================================
@@ -189,14 +189,14 @@ variable "storage_pool" {
 variable "vm_user" {
   description = "Usuário para as VMs"
   type        = string
-  default     = "ubuntu"
+  default     = "admviana"
 }
 
 variable "vm_password" {
   description = "Senha para as VMs"
   type        = string
   sensitive   = true
-  default     = "change-me-123"
+  default     = "abc@123"
 }
 
 # ========================================

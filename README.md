@@ -1,215 +1,211 @@
-# 🚀 Terraform Proxmox Kubernetes Cluster com Rancher
+# 🚀 Cluster Kubernetes no Proxmox VE com Rancher
 
-Este projeto provisiona um cluster Kubernetes no Proxmox VE usando Terraform e configura o cluster com Ansible, incluindo instalação do Rancher para gerenciamento.
+[![Terraform](https://img.shields.io/badge/Terraform-v1.0+-blue?logo=terraform)](https://terraform.io)
+[![Ansible](https://img.shields.io/badge/Ansible-v2.12+-red?logo=ansible)](https://ansible.com)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.28.2-blue?logo=kubernetes)](https://kubernetes.io)
+[![Rancher](https://img.shields.io/badge/Rancher-v2.7.5+-green?logo=rancher)](https://rancher.com)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04_LTS-orange?logo=ubuntu)](https://ubuntu.com)
 
-## ✨ Características
+> **Infraestrutura como Código** completa para provisionar e configurar um cluster Kubernetes empresarial no Proxmox VE, com interface de gerenciamento Rancher e automação total via Terraform + Ansible.
 
-- **🎯 IPs Fixos**: Configuração com IPs fixos para maior controle e previsibilidade
-- **🚀 Ubuntu 22.04 LTS**: Versão estável e confiável com suporte estendido
-- **⚡ Kubernetes 1.28.2**: Versão estável e atual do Kubernetes
-- **🌐 Rancher 2.7.5**: Interface web completa para gerenciamento do cluster
-- **🔧 Automação completa**: Do provisionamento à configuração, tudo automatizado
-- **📊 Cluster Proxmox**: Suporte completo para clusters Proxmox VE
-- **🔐 SSH Key Authentication**: Autenticação segura por chave SSH
-- **🏷️ Tags Padronizadas**: Organização com tags consistentes
-- **✅ Validações Robustas**: Prevenção de configurações inválidas
-- **📋 Melhores Práticas**: Implementação seguindo padrões de segurança
+## 🎯 **Objetivo**
 
-## 📋 Configuração Padrão (Rede Genérica)
+Este projeto automatiza a criação de um cluster Kubernetes de produção no Proxmox VE, seguindo as melhores práticas de segurança, organização e manutenibilidade, ideal para:
 
-| Componente | IP Fixo | Recursos |
-|------------|---------|----------|
-| **Master** | 192.168.1.10 | 4 vCPU, 8GB RAM, 80GB |
-| **Worker 1** | 192.168.1.20 | 4 vCPU, 16GB RAM, 50GB |
-| **Worker 2** | 192.168.1.21 | 4 vCPU, 16GB RAM, 50GB |
+- 🏢 **Ambientes empresariais** e institucionais
+- 🧪 **Laboratórios** e ambientes de desenvolvimento  
+- 📚 **Treinamento** e educação em Kubernetes
+- 🚀 **Proof of Concepts** e projetos piloto
 
-### 🌐 Acessos do Cluster
-- **Kubernetes API**: `https://192.168.1.10:6443`
-- **Rancher UI**: `https://192.168.1.10:8443`
-  - **Usuário**: admin
-  - **Senha**: admin123
-- **SSH Access**: `ssh -i ~/.ssh/k8s-cluster-key ubuntu@IP_DO_NO`
+## ✨ **Características Principais**
 
-## 📋 Pré-requisitos
+### 🔧 **Automação Total**
+- **Terraform**: Provisionamento da infraestrutura no Proxmox VE
+- **Ansible**: Configuração automática do sistema operacional e Kubernetes
+- **Make**: Comandos simplificados para todo o ciclo de vida
 
-### 1. 🖥️ Proxmox VE
-- Proxmox VE 7.0+ instalado e configurado
-- Template Ubuntu 22.04 Cloud-Init criado
-- Token de API configurado com permissões adequadas
-- Recursos suficientes (mínimo: 8 vCPU, 40GB RAM, 180GB storage)
+### 🛡️ **Segurança Enterprise**
+- **SSH Key Authentication**: Autenticação exclusiva por chaves SSH
+- **IPs Fixos**: Controle total da topologia de rede  
+- **Validações Robustas**: Prevenção de configurações inseguras
+- **Variáveis Sensíveis**: Proteção de tokens e credenciais
 
-### 2. 🛠️ Ferramentas Locais
-- **Terraform** >= 1.0
-- **Ansible** >= 2.12
-- **Python** 3.8+
-- **Git** para versionamento
-- **SSH Client** configurado
+### 🏷️ **Organização Profissional**
+- **Tags Padronizadas**: Identificação e billing automatizado
+- **Multi-ambiente**: Suporte a dev/staging/production
+- **Documentação Completa**: Guias detalhados e best practices
+- **Estrutura Modular**: Código organizado e reutilizável
 
-### 3. 🔐 Autenticação SSH
-Gere um par de chaves SSH dedicado para o cluster:
+## � **Arquitetura e Configuração**
 
-```bash
-# Gerar chave SSH para o cluster
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/k8s-cluster-key -C "k8s-cluster@$(hostname)"
+### 🏗️ **Topologia do Cluster**
 
-# Verificar se as chaves foram criadas
-ls -la ~/.ssh/k8s-cluster-key*
+```mermaid
+graph TB
+    subgraph "Proxmox VE Cluster"
+        PM[Proxmox VE<br/>cacto.cefetes.br:8006]
+        
+        subgraph "Kubernetes Cluster"
+            M1[Master Node<br/>172.17.176.34<br/>8GB RAM, 4 vCPU]
+            W1[Worker Node 1<br/>172.17.176.35<br/>16GB RAM, 4 vCPU]
+            W2[Worker Node 2<br/>172.17.176.36<br/>16GB RAM, 4 vCPU]
+        end
+        
+        subgraph "Management"
+            R[Rancher UI<br/>:8443]
+            K[Kubernetes API<br/>:6443]
+        end
+    end
+    
+    PM --> M1
+    PM --> W1
+    PM --> W2
+    M1 --> R
+    M1 --> K
 ```
 
-**Importante**: O projeto está configurado para usar `~/.ssh/k8s-cluster-key` por padrão.
-### 4. 📦 Template Ubuntu 22.04
-**Para cluster Proxmox:** O template pode ser criado em qualquer nó, mas as VMs serão criadas no mesmo nó do template.
+### 🖥️ **Especificações dos Nós**
+
+| Componente | IP Fixo | vCPU | RAM | Disco | Função |
+|------------|---------|------|-----|-------|--------|
+| **Master** | `172.17.176.34` | 4 | 8GB | 80GB | Control Plane + Rancher |
+| **Worker 1** | `172.17.176.35` | 4 | 16GB | 50GB | Cargas de trabalho |
+| **Worker 2** | `172.17.176.36` | 4 | 16GB | 50GB | Cargas de trabalho |
+
+### 🌐 **Pontos de Acesso**
+
+| Serviço | URL/Endpoint | Credenciais | Descrição |
+|---------|--------------|-------------|-----------|
+| **Rancher UI** | `https://172.17.176.34:8443` | `admin` / `admin123` | Interface de gerenciamento |
+| **Kubernetes API** | `https://172.17.176.34:6443` | Via kubeconfig | API do cluster |
+| **SSH Master** | `ssh admviana@172.17.176.34` | Chave SSH | Acesso direto ao master |
+| **SSH Workers** | `ssh admviana@172.17.176.35-36` | Chave SSH | Acesso direto aos workers |
+
+## 📋 **Pré-requisitos**
+
+### 🖥️ **Infraestrutura Proxmox VE**
+- **Proxmox VE** 7.0+ com cluster configurado
+- **Template Ubuntu 22.04** cloud-init criado no nó "gardenia"
+- **Token API** configurado com permissões administrativas
+- **Recursos mínimos**: 12 vCPU, 40GB RAM, 180GB storage
+
+### 🛠️ **Estação de Trabalho**
+```bash
+# Verificar pré-requisitos instalados
+terraform version    # >= 1.0
+ansible --version    # >= 2.12  
+python3 --version    # >= 3.8
+git --version        # Para versionamento
+ssh -V              # Cliente SSH
+```
+
+### 🔐 **Configuração de Autenticação**
+
+#### **1. Chaves SSH Dedicadas**
+```bash
+# Gerar par de chaves SSH exclusivo para o cluster
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/k8s-cluster-key -C "k8s-cluster@cefetes.br"
+
+# Verificar criação das chaves
+ls -la ~/.ssh/k8s-cluster-key*
+-rw-------  1 user user 3243 Aug 13 10:00 /home/user/.ssh/k8s-cluster-key
+-rw-r--r--  1 user user  739 Aug 13 10:00 /home/user/.ssh/k8s-cluster-key.pub
+```
+
+#### **2. Token API do Proxmox**
+1. Acesse: `https://cacto.cefetes.br:8006`
+2. Navegue: **Datacenter** → **Permissions** → **API Tokens**
+3. Crie token para `root@pam` com **Privilege Separation = false**
+4. Anote: **Token ID** e **Secret** (usado apenas uma vez)
+
+### 🐧 **Template Ubuntu 22.04**
 
 #### **Opção A: Script Automatizado (Recomendado)**
 ```bash
-# Executar script no nó Proxmox ou com SSH configurado
+# Download e execução do script
+chmod +x scripts/create-template.sh
 ./scripts/create-template.sh
-
-# Opções disponíveis:
-# ./scripts/create-template.sh single          # Um nó apenas
-# ./scripts/create-template.sh auto            # Detecção automática
-# ./scripts/create-template.sh node1,node2     # Nós específicos
 ```
 
-#### **Opção B: Manual**
-Crie um template Ubuntu 22.04 com cloud-init no Proxmox:
-
+#### **Opção B: Criação Manual**
 ```bash
-# No Proxmox, criar template (executar no shell do Proxmox)
+# Executar no shell do Proxmox VE (nó gardenia)
 wget https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
 qm create 9000 --name ubuntu-22.04-cloud --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0
 qm importdisk 9000 jammy-server-cloudimg-amd64.img local-lvm
 qm set 9000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-9000-disk-0
 qm set 9000 --boot c --bootdisk scsi0
 qm set 9000 --scsi1 local-lvm:cloudinit
-qm set 9000 --vga qxl
-qm set 9000 --agent enabled=1
+qm set 9000 --vga qxl --agent enabled=1
 qm template 9000
 ```
 
-**⚠️ Importante:** Anote o **nome do nó** onde criou o template para configurar no `terraform.tfvars`.
+## ⚡ **Instalação Rápida**
 
-### 5. 🔑 Token de API do Proxmox
-Criar um token de API no Proxmox:
-
-1. Acesse a interface web do Proxmox
-2. Vá em Datacenter > Permissions > API Tokens
-3. Crie um novo token para o usuário root@pam
-4. Marque "Privilege Separation" como false
-
-### 4. Chaves SSH
-Gere um par de chaves SSH se ainda não tiver:
+### 🎯 **Método Express (Recomendado)**
 
 ```bash
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
-```
-
-### 5. Instalar dependências do Ansible
-```bash
-# Instalar coleções necessárias
-ansible-galaxy collection install -r ansible/requirements.yml
-
-# Instalar dependências Python
-pip3 install kubernetes
-```
-
-## ⚙️ Configuração
-
-### 1. 📥 Clonar e Configurar o Projeto
-
-```bash
+# 1. Clonar repositório
 git clone <este-repositorio>
 cd terraform-proxmox-k8s
 chmod +x scripts/*.sh
-```
 
-### 2. � Instalação Rápida (Recomendada)
+# 2. Configurar autenticação
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/k8s-cluster-key -C "k8s-cluster@cefetes.br"
 
-```bash
-# Instalar pré-requisitos e inicializar
-make prerequisites
-make init
-
-# Configurar variáveis (editar conforme sua infraestrutura)
+# 3. Configurar variáveis
 cp terraform.tfvars.example terraform.tfvars
-nano terraform.tfvars
+nano terraform.tfvars  # Editar com suas configurações
 
-# Executar instalação completa
+# 4. Instalação completa
 make install
 ```
 
-### 3. 🎯 Configuração Manual
+**⏱️ Tempo estimado:** 15-20 minutos
 
-#### **3.1. Configurar Variáveis do Terraform**
-```bash
-cp terraform.tfvars.example terraform.tfvars
-```
+### 📝 **Configuração Essencial**
 
-Edite o arquivo `terraform.tfvars` com suas configurações:
+Edite o arquivo `terraform.tfvars` com suas informações:
 
 ```hcl
 # ========================================
-# CONFIGURAÇÕES DO PROXMOX VE - OBRIGATÓRIO
+# CONFIGURAÇÕES PROXMOX VE - OBRIGATÓRIO
 # ========================================
-proxmox_api_url          = "https://your-proxmox-server.domain.com:8006/api2/json"
-proxmox_api_token_id     = "your-user@pve!your-token-name"
-proxmox_api_token_secret = "your-token-secret-here"
-proxmox_node             = "your-proxmox-node"
-
-# ========================================
-# CONFIGURAÇÕES DO AMBIENTE
-# ========================================
-environment = "production"  # development, staging, production
+proxmox_api_url          = "https://cacto.cefetes.br:8006/api2/json"
+proxmox_api_token_id     = "root@pam!terraform"
+proxmox_api_token_secret = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+proxmox_node             = "gardenia"
 
 # ========================================
 # CONFIGURAÇÕES DO CLUSTER
 # ========================================
-cluster_name = "my-k8s-cluster"
-master_count = 1
-worker_count = 2
-template_name = "ubuntu-22.04-cloud"
+cluster_name     = "k8s-cluster-viana"
+environment      = "production"
+template_name    = "ubuntu-22.04-cloud"
 
 # ========================================
-# CONFIGURAÇÕES DE REDE
+# CONFIGURAÇÕES DE REDE (CEFETES)
 # ========================================
 network_bridge  = "vmbr0"
-network_gateway = "192.168.1.1"
-dns_servers     = "8.8.8.8,8.8.4.4"
-search_domain   = "local"
+network_gateway = "172.17.176.1" 
+dns_servers     = "172.17.176.1,8.8.4.4"
+search_domain   = "cefetes.br"
 
 # IPs fixos para os nós
-master_ips = ["192.168.1.10"]
-worker_ips = ["192.168.1.20", "192.168.1.21"]
+master_ips = ["172.17.176.34"]
+worker_ips = ["172.17.176.35", "172.17.176.36"]
 
 # ========================================
 # CONFIGURAÇÕES DE SEGURANÇA
 # ========================================
 ssh_public_key_path = "~/.ssh/k8s-cluster-key.pub"
-vm_user             = "ubuntu"
-vm_password         = "your-secure-password"  # Usado apenas como fallback
-
-# ========================================
-# CONFIGURAÇÕES DE HARDWARE
-# ========================================
-# Masters
-master_memory    = 8192   # 8GB RAM
-master_cpu       = 4      # 4 vCPUs
-master_disk_size = "80G"
-
-# Workers
-worker_memory    = 16384  # 16GB RAM
-worker_cpu       = 4      # 4 vCPUs
-worker_disk_size = "50G"
+vm_user            = "admviana"
+vm_password        = "abc@123"  # Backup apenas, SSH keys é o padrão
 ```
 
-**🔐 Segurança**: Use variáveis de ambiente para tokens em produção:
-```bash
-export TF_VAR_proxmox_api_token_secret="seu-token-aqui"
-```
+### 🚀 **Execução Passo a Passo**
 
-## 🚀 Execução
-
-### 🎯 Método Recomendado (Make)
+Se preferir controle total:
 
 ```bash
 # 1. Instalar dependências
@@ -218,205 +214,191 @@ make prerequisites
 # 2. Inicializar Terraform
 make init
 
-# 3. Planejar execução
+# 3. Visualizar plano
 make plan
 
-# 4. Aplicar configuração completa
-make install
+# 4. Aplicar infraestrutura
+make apply
+
+# 5. Verificar cluster
+make validate
 ```
 
-### 🔧 Método Manual (Terraform + Ansible)
+## 🎉 **Pós-Instalação**
 
-#### **1. Inicializar Terraform**
+### ✅ **Verificação do Cluster**
+
 ```bash
-terraform init
+# Status geral do cluster
+make validate
+
+# Verificar conectividade SSH
+make ping
+
+# Status detalhado dos recursos
+make status
 ```
 
-#### **2. Planejar a Execução**
-```bash
-terraform plan
-```
+### 🌐 **Acesso ao Rancher**
 
-#### **3. Aplicar a Configuração**
-```bash
-terraform apply
-```
+1. **Abrir navegador**: `https://172.17.176.34:8443`
+2. **Credenciais iniciais**:
+   - **Usuário**: `admin`
+   - **Senha**: `admin123`
+3. **Configurar nova senha** (recomendado na primeira vez)
 
-#### **4. Aguardar e Configurar Cluster**
-O processo irá:
-1. ✅ Criar as VMs no Proxmox com SSH keys
-2. ✅ Gerar inventário do Ansible automaticamente
-3. ✅ Aguardar VMs inicializarem (60 segundos)
-4. ✅ Executar playbooks Ansible:
-   - Preparar sistemas operacionais
-   - Instalar Docker em todos os nós
-   - Instalar Kubernetes (kubeadm, kubelet, kubectl)
-   - Configurar o master node com Flannel CNI
-   - Adicionar workers ao cluster
-   - Instalar cert-manager
-   - Instalar e configurar Rancher
-
-**⏱️ Tempo Estimado**: 15-20 minutos (dependendo da velocidade da internet e recursos)
-
-## Pós-instalação
-
-### 1. Verificar o cluster
-```bash
-# Usar Makefile
-make check
-
-# Ou manualmente
-cd ansible && ansible-playbook -i inventory check-cluster.yml
-```
-
-### 2. Acessar o Rancher
-Após a instalação, o Rancher estará disponível em:
-- URL: https://rancher.local (configurar no /etc/hosts)
-- IP direto: https://<MASTER_IP>
-- Usuário: admin
-- Senha inicial: admin123
-
-Para configurar o acesso:
-```bash
-# Adicionar ao /etc/hosts
-echo "<MASTER_IP> rancher.local" | sudo tee -a /etc/hosts
-```
-
-### 3. Obter kubeconfig
-### 3. Obter kubeconfig
-Após a aplicação, copie o arquivo kubeconfig do master:
+### 📋 **Configurar kubectl Local**
 
 ```bash
-# Usar Makefile
+# Baixar kubeconfig do cluster
 make get-kubeconfig
 
-# Ou manualmente
-scp -i ~/.ssh/id_rsa ubuntu@<MASTER_IP>:~/.kube/config ./kubeconfig
-```
-
-### 4. Verificar o cluster
-
-```bash
-# Usar o kubeconfig baixado
+# Verificar funcionamento
 kubectl --kubeconfig=./kubeconfig get nodes
-kubectl --kubeconfig=./kubeconfig get pods -A
+kubectl --kubeconfig=./kubeconfig get pods --all-namespaces
+
+# Configurar como padrão (opcional)
+cp ./kubeconfig ~/.kube/config
+kubectl get nodes
 ```
 
-### 5. Conectar nas VMs
+### 🔗 **Acesso SSH aos Nós**
 
 ```bash
-# Usar Makefile
+# Master node
 make ssh-master
-
-# Ou manualmente
-ssh -i ~/.ssh/id_rsa ubuntu@<MASTER_IP>
-ssh -i ~/.ssh/id_rsa ubuntu@<WORKER_IP>
-```
-
-## Estrutura do projeto
-
-```
-├── main.tf                      # Configuração principal do Terraform
-├── variables.tf                 # Definição de variáveis
-├── outputs.tf                   # Outputs do Terraform
-├── terraform.tfvars.example     # Exemplo de configuração
-├── Makefile                     # Comandos automatizados
-├── README.md                    # Este arquivo
-├── ansible/                     # Configuração Ansible
-│   ├── site.yml                 # Playbook principal
-│   ├── inventory.tpl            # Template do inventário
-│   ├── ansible.cfg              # Configuração Ansible
-│   ├── requirements.yml         # Dependências Ansible
-│   ├── group_vars/
-│   │   └── all.yml              # Variáveis globais
-│   └── roles/                   # Roles Ansible
-│       ├── common/              # Preparação básica
-│       ├── docker/              # Instalação Docker
-│       ├── kubernetes/          # Instalação Kubernetes
-│       ├── kubernetes-master/   # Configuração master
-│       ├── kubernetes-worker/   # Configuração workers
-│       └── rancher/             # Instalação Rancher
-└── scripts/                     # Scripts auxiliares
-    ├── check-cluster.sh         # Verificar cluster
-    └── deploy-example.sh        # Deploy de exemplo
-```
-
-## 🛠️ Comandos Úteis (Makefile)
-
-```bash
-# ===== INSTALAÇÃO =====
-make prerequisites      # Instalar dependências
-make init              # Inicializar Terraform
-make plan              # Planejar mudanças
-make install           # Instalação completa
-make apply             # Aplicar apenas Terraform
-
-# ===== VERIFICAÇÃO =====
-make check             # Verificar cluster
-make validate          # Validar configuração
-make get-kubeconfig    # Baixar kubeconfig
-
-# ===== ACESSO SSH =====
-make ssh-master        # Conectar no master
-make ssh-worker-1      # Conectar no worker 1
-make ssh-worker-2      # Conectar no worker 2
-
-# ===== MANUTENÇÃO =====
-make clean-ssh-keys    # Limpar chaves SSH conhecidas
-make logs              # Ver logs do deployment
-make status            # Status dos recursos
-
-# ===== DESTRUIÇÃO =====
-make destroy           # Destruir infraestrutura
-make clean             # Limpar arquivos temporários
-```
-
-### 📊 Comandos de Monitoramento
-
-```bash
-# Status dos nós
-kubectl --kubeconfig=./ansible/kubeconfig get nodes -o wide
-
-# Pods do sistema
-kubectl --kubeconfig=./ansible/kubeconfig get pods -A
-
-# Status do Rancher
-kubectl --kubeconfig=./ansible/kubeconfig get pods -n cattle-system
-
-# Recursos do cluster
-kubectl --kubeconfig=./ansible/kubeconfig top nodes
-```
-
-## Personalização
-
-### Alterar recursos das VMs
-Edite as variáveis no `terraform.tfvars`:
-
-```hcl
-# Master nodes
-master_memory    = 4096  # MB
-master_cpu       = 2
-master_disk_size = "50G"
+# ou: ssh -i ~/.ssh/k8s-cluster-key admviana@172.17.176.34
 
 # Worker nodes
-worker_memory    = 8192  # MB
-worker_cpu       = 4
-worker_disk_size = "100G"
+ssh -i ~/.ssh/k8s-cluster-key admviana@172.17.176.35
+ssh -i ~/.ssh/k8s-cluster-key admviana@172.17.176.36
 ```
 
-### Adicionar mais workers
-Altere a variável `worker_count`:
+## 🛠️ **Comandos de Gerenciamento**
 
-```hcl
-worker_count = 3  # Para 3 workers
+### 📊 **Monitoramento**
+```bash
+make status           # Status da infraestrutura
+make validate         # Validar cluster completo
+make logs            # Ver logs do deployment
+make check           # Verificação rápida
 ```
 
-### Configurar rede diferente
-Ajuste as configurações de rede:
+### 🔧 **Manutenção** 
+```bash
+make clean-ssh-keys  # Limpar known_hosts (útil para VMs recriadas)
+make rancher-info    # Informações de acesso ao Rancher
+make urls            # Todas as URLs de acesso
+```
+
+### 🧹 **Limpeza**
+```bash
+make clean           # Limpar arquivos temporários
+make destroy         # Destruir toda a infraestrutura
+```
+
+## 📁 **Estrutura do Projeto**
+
+```
+📂 terraform-proxmox-k8s/
+├── 🏗️  Infraestrutura (Terraform)
+│   ├── main.tf                      # Recursos principais do Proxmox
+│   ├── variables.tf                 # Variáveis com validações
+│   ├── outputs.tf                   # Outputs informativos
+│   ├── locals.tf                    # Configurações locais
+│   └── terraform.tfvars.example     # Template de configuração
+│
+├── 🤖 Configuração (Ansible)
+│   ├── site.yml                     # Playbook principal
+│   ├── inventory.tpl                # Template do inventário
+│   ├── ansible.cfg                  # Configuração SSH
+│   ├── requirements.yml             # Collections necessárias
+│   ├── group_vars/all.yml           # Variáveis globais
+│   └── roles/                       # Roles de configuração
+│       ├── common/                  # Preparação do sistema
+│       ├── docker/                  # Docker + containerd
+│       ├── kubernetes/              # Kubernetes base
+│       ├── kubernetes-master/       # Configuração do master
+│       ├── kubernetes-worker/       # Configuração dos workers
+│       └── rancher/                 # Instalação do Rancher
+│
+├── 📜 Scripts Auxiliares
+│   ├── install-prerequisites.sh     # Instalação de dependências
+│   ├── validate-cluster.sh          # Validação do cluster
+│   ├── create-template.sh           # Criação de templates
+│   └── check-cluster.sh             # Verificação rápida
+│
+├── 🛠️  Automação
+│   ├── Makefile                     # Comandos simplificados
+│   └── setup.sh                     # Setup inicial
+│
+├── 📚 Documentação
+│   ├── README.md                    # Este arquivo
+│   ├── OVERVIEW.md                  # Visão geral do projeto  
+│   ├── BEST-PRACTICES.md            # Melhores práticas
+│   ├── CLUSTER-QUICK-GUIDE.md       # Guia rápido
+│   ├── CHANGELOG.md                 # Histórico de mudanças
+│   └── docs/                        # Documentação adicional
+│
+└── 📊 Logs e Outputs
+    ├── logs/                        # Logs de execução
+    └── ansible/inventory             # Inventário gerado (auto)
+```
+
+## 🔧 **Personalização Avançada**
+
+### 🖥️ **Alterar Recursos das VMs**
 
 ```hcl
-network_cidr    = "10.0.0.0/24"
+# Editar terraform.tfvars
+# Masters com mais recursos
+master_memory    = 16384  # 16GB RAM
+master_cpu       = 8      # 8 vCPUs
+master_disk_size = "120G"
+
+# Workers otimizados
+worker_memory    = 32768  # 32GB RAM  
+worker_cpu       = 8      # 8 vCPUs
+worker_disk_size = "200G"
+```
+
+### 📈 **Expandir o Cluster**
+
+```hcl
+# Adicionar mais workers
+worker_count = 5
+worker_ips   = [
+  "172.17.176.35",
+  "172.17.176.36", 
+  "172.17.176.37",
+  "172.17.176.38",
+  "172.17.176.39"
+]
+```
+
+### 🌐 **Configurar Rede Personalizada**
+
+```hcl
+# Para outras redes/instituições
 network_gateway = "10.0.0.1"
+dns_servers     = "10.0.0.1,8.8.8.8"
+search_domain   = "minha-empresa.com"
+
+master_ips = ["10.0.0.10"]
+worker_ips = ["10.0.0.20", "10.0.0.21"]
+```
+
+### 🔒 **Ambientes Múltiplos**
+
+```bash
+# Desenvolvimento
+echo 'environment = "development"' >> terraform.tfvars
+
+# Staging  
+echo 'environment = "staging"' >> terraform.tfvars
+
+# Produção
+echo 'environment = "production"' >> terraform.tfvars
 ```
 
 ## Troubleshooting
@@ -479,52 +461,157 @@ O Rancher fornece:
 - Backup e restore
 - Gestão de projetos e namespaces
 
-## Troubleshooting
+## 🆘 **Troubleshooting**
 
-### VMs não inicializam
-- Verifique se o template existe no Proxmox
-- Confirme se o nome do nó está correto
-- Verifique se há recursos suficientes
+### 🔍 **Problemas Comuns**
 
-### Erro de SSH/Ansible
-- Confirme se a chave SSH está correta
-- Verifique se as VMs têm acesso à internet
-- Confirme se o cloud-init está funcionando
-- Teste conectividade: `ansible all -m ping`
+#### **VMs não inicializam**
+```bash
+# Verificar template no nó correto
+ssh root@gardenia "qm list | grep ubuntu-22.04-cloud"
 
-### Cluster não forma
-- Verifique logs: `journalctl -u kubelet`
-- Confirme conectividade entre nós
-- Verifique se as portas necessárias estão abertas
+# Verificar recursos disponíveis
+pvesh get /nodes/gardenia/status
 
-### Rancher não acessa
-- Verifique se todos os pods estão rodando: `kubectl get pods -n cattle-system`
-- Confirme se cert-manager está funcionando: `kubectl get pods -n cert-manager`
-- Verifique logs do Rancher: `kubectl logs -n cattle-system -l app=rancher`
+# Logs das VMs
+ssh root@gardenia "qm status <VMID>"
+```
 
-### Comandos úteis
+#### **Erro de SSH/Conexão**
+```bash
+# Limpar known_hosts (VMs recriadas)
+make clean-ssh-keys
+
+# Testar conectividade
+make ping
+
+# Verificar chaves SSH
+ssh-add -l
+ssh-add ~/.ssh/k8s-cluster-key
+```
+
+#### **Cluster Kubernetes não forma**
+```bash
+# Logs do kubelet no master
+ssh -i ~/.ssh/k8s-cluster-key admviana@172.17.176.34 "sudo journalctl -u kubelet -f"
+
+# Status dos pods do sistema
+kubectl --kubeconfig=./kubeconfig get pods -n kube-system
+
+# Verificar conectividade entre nós
+ansible all -i ansible/inventory -m ping
+```
+
+#### **Rancher não acessa**
+```bash
+# Status dos pods do Rancher
+kubectl --kubeconfig=./kubeconfig get pods -n cattle-system
+
+# Logs do Rancher
+kubectl --kubeconfig=./kubeconfig logs -n cattle-system -l app=rancher
+
+# Verificar cert-manager
+kubectl --kubeconfig=./kubeconfig get pods -n cert-manager
+```
+
+### 🔧 **Comandos de Diagnóstico**
 
 ```bash
-# Verificar status geral
-kubectl get nodes
-kubectl get pods -A
+# Status geral completo
+make status
 
-# Logs específicos
-kubectl logs -n kube-system -l app=flannel
-kubectl logs -n cattle-system -l app=rancher
+# Logs detalhados
+make logs
 
-# Reiniciar Rancher
-kubectl rollout restart deployment/rancher -n cattle-system
-
-# Ver status das VMs no Proxmox
-pvesh get /cluster/resources --type vm
-
-# Logs do cloud-init nas VMs
+# Debug do cloud-init (nas VMs)
 sudo cat /var/log/cloud-init-output.log
 
-# Status do kubelet
-sudo systemctl status kubelet
+# Debug do Ansible (verbose)
+cd ansible && ansible-playbook -i inventory site.yml -vvv
 
-# Executar playbook específico
-cd ansible && ansible-playbook -i inventory roles/rancher/tasks/main.yml
+# Recursos do Proxmox
+pvesh get /cluster/resources --type vm
+pvesh get /cluster/resources --type storage
 ```
+
+### 🚑 **Soluções Rápidas**
+
+```bash
+# Reiniciar serviços Kubernetes
+sudo systemctl restart kubelet
+
+# Reiniciar deployment do Rancher  
+kubectl rollout restart deployment/rancher -n cattle-system
+
+# Recriar cluster (destruir e criar novamente)
+make destroy
+make install
+
+# Aplicar apenas configuração (sem destruir VMs)
+cd ansible && ansible-playbook -i inventory site.yml
+```
+
+## 🔐 **Segurança e Melhores Práticas**
+
+### ✅ **Implementado**
+- 🔐 **SSH Keys**: Autenticação exclusiva por chaves
+- 🏷️ **Tags**: Sistema padronizado para organização
+- ✅ **Validações**: Prevenção de configurações inseguras  
+- 🔒 **Variáveis Sensíveis**: Proteção de tokens/senhas
+- 📝 **Logs**: Rastreabilidade completa de ações
+
+### 🔧 **Recomendações Adicionais**
+
+```bash
+# Usar variáveis de ambiente em produção
+export TF_VAR_proxmox_api_token_secret="token-secreto"
+export TF_VAR_vm_password="senha-forte"
+
+# Configurar backend remoto para o estado
+terraform init -backend-config="bucket=meu-bucket-terraform"
+
+# Habilitar audit logs no Kubernetes
+kubectl patch configmap/audit-policy -n kube-system
+
+# Backup regular do estado
+cp terraform.tfstate backup/terraform.tfstate.$(date +%Y%m%d)
+```
+
+## 📚 **Recursos Adicionais**
+
+### 🔗 **Links Úteis**
+- [Documentação Terraform Proxmox](https://registry.terraform.io/providers/Telmate/proxmox/latest/docs)
+- [Guia Ansible Kubernetes](https://docs.ansible.com/ansible/latest/collections/kubernetes/core/)
+- [Documentação Rancher](https://rancher.com/docs/rancher/v2.x/en/)
+- [Kubernetes Best Practices](https://kubernetes.io/docs/setup/best-practices/)
+
+### 📖 **Documentação do Projeto**
+- `OVERVIEW.md` - Visão geral e arquitetura
+- `BEST-PRACTICES.md` - Melhores práticas implementadas  
+- `CLUSTER-QUICK-GUIDE.md` - Guia rápido para clusters
+- `CHANGELOG.md` - Histórico de mudanças
+- `docs/` - Documentação técnica detalhada
+
+---
+
+## 🎯 **Conclusão**
+
+Este projeto fornece uma **infraestrutura completa** e **pronta para produção** de Kubernetes no Proxmox VE, com:
+
+✅ **Automação total** do provisionamento à configuração  
+✅ **Segurança enterprise** com SSH keys e validações  
+✅ **Interface moderna** com Rancher para gerenciamento  
+✅ **Documentação completa** e melhores práticas  
+✅ **Flexibilidade** para diferentes ambientes e escalas  
+
+**Ideal para:** Empresas, instituições educacionais, laboratórios e projetos que precisam de um cluster Kubernetes robusto e bem documentado.
+
+---
+
+<div align="center">
+
+**🚀 Seu cluster Kubernetes está a apenas alguns comandos de distância!**
+
+[![Made with ❤️ by CEFET-ES](https://img.shields.io/badge/Made%20with%20❤️%20by-CEFET--ES-blue)](https://cefetes.br)
+
+</div>
