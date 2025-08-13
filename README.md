@@ -42,50 +42,50 @@ Este projeto automatiza a criação de um cluster Kubernetes de produção no Pr
 
 ```mermaid
 graph TB
-    subgraph "Proxmox VE Cluster"
-        PM[Proxmox VE<br/>cacto.cefetes.br:8006]
-        
-        subgraph "Kubernetes Cluster"
-            M1[Master Node<br/>172.17.176.34<br/>8GB RAM, 4 vCPU]
-            W1[Worker Node 1<br/>172.17.176.35<br/>16GB RAM, 4 vCPU]
-            W2[Worker Node 2<br/>172.17.176.36<br/>16GB RAM, 4 vCPU]
-        end
-        
-        subgraph "Management"
-            R[Rancher UI<br/>:8443]
-            K[Kubernetes API<br/>:6443]
-        end
+  subgraph "Proxmox VE Cluster"
+    PM[Proxmox VE<br/>seu-proxmox.dominio.br:8006]
+    
+    subgraph "Kubernetes Cluster"
+      M1[Master Node<br/>IP Master<br/>8GB RAM, 4 vCPU]
+      W1[Worker Node 1<br/>IP Worker 1<br/>16GB RAM, 4 vCPU]
+      W2[Worker Node 2<br/>IP Worker 2<br/>16GB RAM, 4 vCPU]
     end
     
-    PM --> M1
-    PM --> W1
-    PM --> W2
-    M1 --> R
-    M1 --> K
+    subgraph "Management"
+      R[Rancher UI<br/>:8443]
+      K[Kubernetes API<br/>:6443]
+    end
+  end
+  
+  PM --> M1
+  PM --> W1
+  PM --> W2
+  M1 --> R
+  M1 --> K
 ```
 
 ### 🖥️ **Especificações dos Nós**
 
 | Componente | IP Fixo | vCPU | RAM | Disco | Função |
 |------------|---------|------|-----|-------|--------|
-| **Master** | `172.17.176.34` | 4 | 8GB | 80GB | Control Plane + Rancher |
-| **Worker 1** | `172.17.176.35` | 4 | 16GB | 50GB | Cargas de trabalho |
-| **Worker 2** | `172.17.176.36` | 4 | 16GB | 50GB | Cargas de trabalho |
+| **Master** | `<IP Master>` | 4 | 8GB | 80GB | Control Plane + Rancher |
+| **Worker 1** | `<IP Worker 1>` | 4 | 16GB | 50GB | Cargas de trabalho |
+| **Worker 2** | `<IP Worker 2>` | 4 | 16GB | 50GB | Cargas de trabalho |
 
 ### 🌐 **Pontos de Acesso**
 
 | Serviço | URL/Endpoint | Credenciais | Descrição |
 |---------|--------------|-------------|-----------|
-| **Rancher UI** | `https://172.17.176.34:8443` | `admin` / `admin123` | Interface de gerenciamento |
-| **Kubernetes API** | `https://172.17.176.34:6443` | Via kubeconfig | API do cluster |
-| **SSH Master** | `ssh admviana@172.17.176.34` | Chave SSH | Acesso direto ao master |
-| **SSH Workers** | `ssh admviana@172.17.176.35-36` | Chave SSH | Acesso direto aos workers |
+| **Rancher UI** | `https://<IP Master>:8443` | `admin` / `admin123` | Interface de gerenciamento |
+| **Kubernetes API** | `https://<IP Master>:6443` | Via kubeconfig | API do cluster |
+| **SSH Master** | `ssh usuario@<IP Master>` | Chave SSH | Acesso direto ao master |
+| **SSH Workers** | `ssh usuario@<IP Worker 1-2>` | Chave SSH | Acesso direto aos workers |
 
 ## 📋 **Pré-requisitos**
 
 ### 🖥️ **Infraestrutura Proxmox VE**
 - **Proxmox VE** 7.0+ com cluster configurado
-- **Template Ubuntu 22.04** cloud-init criado no nó "gardenia"
+- **Template Ubuntu 22.04** cloud-init criado no nó desejado
 - **Token API** configurado com permissões administrativas
 - **Recursos mínimos**: 12 vCPU, 40GB RAM, 180GB storage
 
@@ -104,7 +104,7 @@ ssh -V              # Cliente SSH
 #### **1. Chaves SSH Dedicadas**
 ```bash
 # Gerar par de chaves SSH exclusivo para o cluster
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/k8s-cluster-key -C "k8s-cluster@cefetes.br"
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/k8s-cluster-key -C "k8s-cluster@empresa.com.br"
 
 # Verificar criação das chaves
 ls -la ~/.ssh/k8s-cluster-key*
@@ -113,7 +113,7 @@ ls -la ~/.ssh/k8s-cluster-key*
 ```
 
 #### **2. Token API do Proxmox**
-1. Acesse: `https://cacto.cefetes.br:8006`
+1. Acesse: `https://seu-proxmox.dominio.br:8006`
 2. Navegue: **Datacenter** → **Permissions** → **API Tokens**
 3. Crie token para `root@pam` com **Privilege Separation = false**
 4. Anote: **Token ID** e **Secret** (usado apenas uma vez)
@@ -129,7 +129,7 @@ chmod +x scripts/create-template.sh
 
 #### **Opção B: Criação Manual**
 ```bash
-# Executar no shell do Proxmox VE (nó gardenia)
+# Executar no shell do Proxmox VE (nó desejado)
 wget https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
 qm create 9000 --name ubuntu-22.04-cloud --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0
 qm importdisk 9000 jammy-server-cloudimg-amd64.img local-lvm
@@ -151,7 +151,7 @@ cd terraform-proxmox-k8s
 chmod +x scripts/*.sh
 
 # 2. Configurar autenticação
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/k8s-cluster-key -C "k8s-cluster@cefetes.br"
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/k8s-cluster-key -C "k8s-cluster@empresa.com.br"
 
 # 3. Configurar variáveis
 cp terraform.tfvars.example terraform.tfvars
@@ -171,36 +171,36 @@ Edite o arquivo `terraform.tfvars` com suas informações:
 # ========================================
 # CONFIGURAÇÕES PROXMOX VE - OBRIGATÓRIO
 # ========================================
-proxmox_api_url          = "https://cacto.cefetes.br:8006/api2/json"
+proxmox_api_url          = "https://seu-proxmox.dominio.br:8006/api2/json"
 proxmox_api_token_id     = "root@pam!terraform"
 proxmox_api_token_secret = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-proxmox_node             = "gardenia"
+proxmox_node             = "seu-node"
 
 # ========================================
 # CONFIGURAÇÕES DO CLUSTER
 # ========================================
-cluster_name     = "k8s-cluster-viana"
+cluster_name     = "k8s-cluster-empresa"
 environment      = "production"
 template_name    = "ubuntu-22.04-cloud"
 
 # ========================================
-# CONFIGURAÇÕES DE REDE (CEFETES)
+# CONFIGURAÇÕES DE REDE
 # ========================================
 network_bridge  = "vmbr0"
-network_gateway = "172.17.176.1" 
-dns_servers     = "172.17.176.1,8.8.4.4"
-search_domain   = "cefetes.br"
+network_gateway = "<gateway>" 
+dns_servers     = "<dns1>,<dns2>"
+search_domain   = "empresa.com.br"
 
 # IPs fixos para os nós
-master_ips = ["172.17.176.34"]
-worker_ips = ["172.17.176.35", "172.17.176.36"]
+master_ips = ["<IP Master>"]
+worker_ips = ["<IP Worker 1>", "<IP Worker 2>"]
 
 # ========================================
 # CONFIGURAÇÕES DE SEGURANÇA
 # ========================================
 ssh_public_key_path = "~/.ssh/k8s-cluster-key.pub"
-vm_user            = "admviana"
-vm_password        = "abc@123"  # Backup apenas, SSH keys é o padrão
+vm_user            = "usuario"
+vm_password        = "senha-segura"  # Backup apenas, SSH keys é o padrão
 ```
 
 ### 🚀 **Execução Passo a Passo**
@@ -241,7 +241,7 @@ make status
 
 ### 🌐 **Acesso ao Rancher**
 
-1. **Abrir navegador**: `https://172.17.176.34:8443`
+1. **Abrir navegador**: `https://<IP Master>:8443`
 2. **Credenciais iniciais**:
    - **Usuário**: `admin`
    - **Senha**: `admin123`
@@ -267,11 +267,11 @@ kubectl get nodes
 ```bash
 # Master node
 make ssh-master
-# ou: ssh -i ~/.ssh/k8s-cluster-key admviana@172.17.176.34
+# ou: ssh -i ~/.ssh/k8s-cluster-key usuario@<IP Master>
 
 # Worker nodes
-ssh -i ~/.ssh/k8s-cluster-key admviana@172.17.176.35
-ssh -i ~/.ssh/k8s-cluster-key admviana@172.17.176.36
+ssh -i ~/.ssh/k8s-cluster-key usuario@<IP Worker 1>
+ssh -i ~/.ssh/k8s-cluster-key usuario@<IP Worker 2>
 ```
 
 ## 🛠️ **Comandos de Gerenciamento**
@@ -341,8 +341,8 @@ make destroy         # Destruir toda a infraestrutura
 │   └── docs/                        # Documentação adicional
 │
 └── 📊 Logs e Outputs
-    ├── logs/                        # Logs de execução
-    └── ansible/inventory             # Inventário gerado (auto)
+  ├── logs/                        # Logs de execução
+  └── ansible/inventory             # Inventário gerado (auto)
 ```
 
 ## 🔧 **Personalização Avançada**
@@ -368,11 +368,11 @@ worker_disk_size = "200G"
 # Adicionar mais workers
 worker_count = 5
 worker_ips   = [
-  "172.17.176.35",
-  "172.17.176.36", 
-  "172.17.176.37",
-  "172.17.176.38",
-  "172.17.176.39"
+  "<IP Worker 1>",
+  "<IP Worker 2>", 
+  "<IP Worker 3>",
+  "<IP Worker 4>",
+  "<IP Worker 5>"
 ]
 ```
 
@@ -380,12 +380,12 @@ worker_ips   = [
 
 ```hcl
 # Para outras redes/instituições
-network_gateway = "10.0.0.1"
-dns_servers     = "10.0.0.1,8.8.8.8"
+network_gateway = "<gateway>"
+dns_servers     = "<dns1>,<dns2>"
 search_domain   = "minha-empresa.com"
 
-master_ips = ["10.0.0.10"]
-worker_ips = ["10.0.0.20", "10.0.0.21"]
+master_ips = ["<IP Master>"]
+worker_ips = ["<IP Worker 1>", "<IP Worker 2>"]
 ```
 
 ### 🔒 **Ambientes Múltiplos**
@@ -468,13 +468,13 @@ O Rancher fornece:
 #### **VMs não inicializam**
 ```bash
 # Verificar template no nó correto
-ssh root@gardenia "qm list | grep ubuntu-22.04-cloud"
+ssh root@seu-node "qm list | grep ubuntu-22.04-cloud"
 
 # Verificar recursos disponíveis
-pvesh get /nodes/gardenia/status
+pvesh get /nodes/seu-node/status
 
 # Logs das VMs
-ssh root@gardenia "qm status <VMID>"
+ssh root@seu-node "qm status <VMID>"
 ```
 
 #### **Erro de SSH/Conexão**
@@ -493,7 +493,7 @@ ssh-add ~/.ssh/k8s-cluster-key
 #### **Cluster Kubernetes não forma**
 ```bash
 # Logs do kubelet no master
-ssh -i ~/.ssh/k8s-cluster-key admviana@172.17.176.34 "sudo journalctl -u kubelet -f"
+ssh -i ~/.ssh/k8s-cluster-key usuario@<IP Master> "sudo journalctl -u kubelet -f"
 
 # Status dos pods do sistema
 kubectl --kubeconfig=./kubeconfig get pods -n kube-system
@@ -612,6 +612,6 @@ Este projeto fornece uma **infraestrutura completa** e **pronta para produção*
 
 **🚀 Seu cluster Kubernetes está a apenas alguns comandos de distância!**
 
-[![Made with ❤️ by CEFET-ES](https://img.shields.io/badge/Made%20with%20❤️%20by-CEFET--ES-blue)](https://cefetes.br)
+[![Made with ❤️ by Sua Empresa](https://img.shields.io/badge/Made%20with%20❤️%20by-Sua%20Empresa-blue)](https://empresa.com.br)
 
 </div>
