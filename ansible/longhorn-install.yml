@@ -1,0 +1,49 @@
+---
+# Playbook para instalação do Longhorn Storage
+# Execute após o cluster Kubernetes estar funcionando
+
+- name: Instalar Longhorn Storage
+  hosts: masters[0]  # Executar apenas no primeiro master
+  gather_facts: false
+  vars:
+    # Configurações podem ser sobrescritas
+    longhorn_version: "v1.5.3"
+    longhorn_set_default_storage_class: true
+    longhorn_validate_installation: true
+  
+  pre_tasks:
+    - name: "Verificar conectividade com cluster"
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Node
+      register: cluster_check
+
+    - name: "Mostrar informações do cluster"
+      debug:
+        msg: "Cluster Kubernetes com {{ cluster_check.resources | length }} nós detectado"
+
+  roles:
+    - longhorn
+
+  post_tasks:
+    - name: "Aguardar estabilização do Longhorn"
+      pause:
+        seconds: 30
+        prompt: "Aguardando Longhorn estabilizar..."
+
+    - name: "Verificar status final"
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        namespace: longhorn-system
+        field_selectors:
+          - status.phase=Running
+      register: final_status
+
+    - name: "Relatório final"
+      debug:
+        msg:
+          - "🎉 Instalação do Longhorn concluída!"
+          - "📊 Status: {{ final_status.resources | length }} pods rodando"
+          - "🔧 Teste: kubectl apply -f /path/to/test-pvc.yaml"
+          - "🌐 UI: kubectl port-forward -n longhorn-system svc/longhorn-frontend 8080:80"

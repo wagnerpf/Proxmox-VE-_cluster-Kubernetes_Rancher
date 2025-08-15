@@ -1,0 +1,180 @@
+---
+- name: "Verificar se cluster Kubernetes está acessível"
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Node
+  register: cluster_nodes
+  run_once: true
+
+- name: "Mostrar informações do cluster"
+  debug:
+    msg: "Cluster com {{ cluster_nodes.resources | length }} nós detectado"
+  run_once: true
+
+- name: "Verificar se namespace Longhorn já existe"
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Namespace
+    name: "{{ longhorn_namespace }}"
+  register: longhorn_ns_check
+  run_once: true
+
+- name: "Verificar se Longhorn já está instalado"
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    namespace: "{{ longhorn_namespace }}"
+    name: longhorn-manager
+  register: longhorn_deployment_check
+  run_once: true
+  when: longhorn_ns_check.resources | length > 0
+
+- name: "Pular instalação se Longhorn já existir"
+  debug:
+    msg: "Longhorn já está instalado, pulando instalação"
+  when: 
+    - longhorn_ns_check.resources | length > 0
+    - longhorn_deployment_check.resources | length > 0
+  run_once: true
+
+- name: "Instalar Longhorn"
+  block:
+    - name: "Baixar manifests do Longhorn"
+      uri:
+        url: "{{ longhorn_manifest_url }}"
+        method: GET
+        return_content: yes
+      register: longhorn_manifests
+      run_once: true
+
+    - name: "Aplicar manifests do Longhorn"
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ item | from_yaml_all | list }}"
+        wait: true
+        wait_timeout: "{{ longhorn_wait_timeout }}"
+      with_items:
+        - "{{ longhorn_manifests.content }}"
+      run_once: true
+
+    - name: "Aguardar namespace Longhorn ser criado"
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Namespace
+        name: "{{ longhorn_namespace }}"
+        wait: true
+        wait_timeout: 60
+      run_once: true
+
+    - name: "Aguardar pods do Longhorn ficarem prontos"
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        namespace: "{{ longhorn_namespace }}"
+        label_selectors:
+          - app=longhorn-manager
+        wait: true
+        wait_condition:
+          type: Ready
+          status: "True"
+        wait_timeout: "{{ longhorn_wait_timeout }}"
+      run_once: true
+
+    - name: "Aguardar storage class Longhorn ser criada"
+      kubernetes.core.k8s_info:
+        api_version: storage.k8s.io/v1
+        kind: StorageClass
+        name: "{{ longhorn_storage_class.name }}"
+        wait: true
+        wait_timeout: 120
+      run_once: true
+
+  when: 
+    - longhorn_ns_check.resources | length == 0 or longhorn_deployment_check.resources | length == 0
+
+- name: "Configurar Longhorn como storage class padrão"
+  block:
+    - name: "Obter storage classes existentes"
+      kubernetes.core.k8s_info:
+        api_version: storage.k8s.io/v1
+        kind: StorageClass
+      register: existing_storage_classes
+      run_once: true
+
+    - name: "Remover marcação padrão de outras storage classes"
+      kubernetes.core.k8s:
+        state: present
+        api_version: storage.k8s.io/v1
+        kind: StorageClass
+        name: "{{ item.metadata.name }}"
+        definition:
+          metadata:
+            annotations:
+              storageclass.kubernetes.io/is-default-class: "false"
+      with_items: "{{ existing_storage_classes.resources }}"
+      when: 
+        - longhorn_remove_previous_default
+        - item.metadata.annotations is defined
+        - item.metadata.annotations['storageclass.kubernetes.io/is-default-class'] is defined
+        - item.metadata.annotations['storageclass.kubernetes.io/is-default-class'] == "true"
+      run_once: true
+
+    - name: "Definir Longhorn como storage class padrão"
+      kubernetes.core.k8s:
+        state: present
+        api_version: storage.k8s.io/v1
+        kind: StorageClass
+        name: "{{ longhorn_storage_class.name }}"
+        definition:
+          metadata:
+            annotations:
+              storageclass.kubernetes.io/is-default-class: "true"
+      run_once: true
+
+  when: longhorn_set_default_storage_class
+
+- name: "Validar instalação do Longhorn"
+  block:
+    - name: "Verificar pods do Longhorn em execução"
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        namespace: "{{ longhorn_namespace }}"
+        field_selectors:
+          - status.phase=Running
+      register: longhorn_running_pods
+      run_once: true
+
+    - name: "Verificar storage class Longhorn"
+      kubernetes.core.k8s_info:
+        api_version: storage.k8s.io/v1
+        kind: StorageClass
+        name: "{{ longhorn_storage_class.name }}"
+      register: longhorn_sc_check
+      run_once: true
+
+    - name: "Mostrar resultado da validação"
+      debug:
+        msg:
+          - "✅ Longhorn instalado com sucesso!"
+          - "📦 Pods em execução: {{ longhorn_running_pods.resources | length }}"
+          - "💾 Storage class criada: {{ longhorn_sc_check.resources | length > 0 }}"
+          - "🎯 Storage class padrão: {{ longhorn_set_default_storage_class }}"
+      run_once: true
+
+    - name: "Falhar se validação não passou"
+      fail:
+        msg: "Validação do Longhorn falhou - pods não estão rodando"
+      when: longhorn_running_pods.resources | length == 0
+      run_once: true
+
+  when: longhorn_validate_installation
+
+- name: "Mostrar informações de acesso"
+  debug:
+    msg:
+      - "🐄 Longhorn Storage instalado!"
+      - "🌐 Interface Web: kubectl port-forward -n {{ longhorn_namespace }} svc/longhorn-frontend 8080:80"
+      - "📝 Para usar em PVCs: storageClassName: {{ longhorn_storage_class.name }}"
+      - "📚 Documentação: https://longhorn.io/docs/"
+  run_once: true

@@ -589,6 +589,7 @@ cp terraform.tfstate backup/terraform.tfstate.$(date +%Y%m%d)
 - `OVERVIEW.md` - Visão geral e arquitetura
 - `BEST-PRACTICES.md` - Melhores práticas implementadas  
 - `CLUSTER-QUICK-GUIDE.md` - Guia rápido para clusters
+- `VOLUMES-PERSISTENTES.md` - Guia completo de storage com Longhorn
 - `CHANGELOG.md` - Histórico de mudanças
 - `docs/` - Documentação técnica detalhada
 

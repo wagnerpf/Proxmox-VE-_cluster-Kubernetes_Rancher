@@ -1,0 +1,30 @@
+---
+# Configurações padrão para instalação do Longhorn
+
+# Versão do Longhorn a ser instalada
+longhorn_version: "v1.5.3"
+
+# URL dos manifests do Longhorn
+longhorn_manifest_url: "https://raw.githubusercontent.com/longhorn/longhorn/{{ longhorn_version }}/deploy/longhorn.yaml"
+
+# Configurar como storage class padrão
+longhorn_set_default_storage_class: true
+
+# Aguardar pods ficarem prontos (em segundos)
+longhorn_wait_timeout: 600
+
+# Namespace do Longhorn
+longhorn_namespace: "longhorn-system"
+
+# Configurações de storage class
+longhorn_storage_class:
+  name: "longhorn"
+  reclaim_policy: "Delete"
+  volume_binding_mode: "Immediate"
+  allow_volume_expansion: true
+
+# Validar instalação
+longhorn_validate_installation: true
+
+# Remover storage class padrão anterior
+longhorn_remove_previous_default: true
