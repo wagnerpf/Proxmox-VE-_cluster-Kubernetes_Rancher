@@ -1,4 +1,4 @@
-# 🚀 Projeto Terraform + Ansible + Proxmox + Kubernetes + Rancher
+# 🚀 Projeto Terraform + Ansible + Proxmox + Kubernetes
 
 ## 📋 Resumo do Projeto
 
@@ -9,7 +9,7 @@ project=my-k8s-cluster
 managed-by=terraform
 kubernetes + master/worker
 node-type=control-plane/worker
-```o provisiona automaticamente um cluster Kubernetes completo no Proxmox VE com Rancher para gerenciamento, usando a combinação de Terraform para infraestrutura e Ansible para configuração, seguindo as melhores práticas de segurança e organização.
+```o provisiona automaticamente um cluster Kubernetes completo no Proxmox VE, usando a combinação de Terraform para infraestrutura e Ansible para configuração, seguindo as melhores práticas de segurança e organização.
 
 ## � Versão Atual: **v2.0** - Enterprise Ready
 
@@ -55,7 +55,6 @@ graph TB
     end
     
     subgraph "🎛️ Interfaces de Gerenciamento"
-        RANCHER[🤠 Rancher UI<br/>:8443<br/>admin/admin123]
         KAPI[☸️ Kubernetes API<br/>:6443<br/>kubectl access]
     end
     
@@ -69,7 +68,6 @@ graph TB
     TPL --> M1
     TPL --> W1
     TPL --> W2
-    M1 --> RANCHER
     M1 --> KAPI
     GW --> M1
     GW --> W1
@@ -100,20 +98,15 @@ graph TB
 - **containerd**: Interface de runtime de containers
 - **Flannel CNI**: Plugin de rede para pods
 
-#### **🎛️ Camada de Gerenciamento**
-- **Rancher v2.7.5+**: Interface web de gerenciamento
-- **cert-manager**: Gerenciamento automático de certificados TLS
-- **Helm**: Gerenciador de pacotes Kubernetes
-
 ## 🎯 **Especificações Detalhadas**
 
 ### � **Configuração dos Nós**
 
 | Componente | Especificação | Valor | Observações |
 |------------|---------------|--------|-------------|
-| **Master Node** | IP fixo | `<IP_MASTER>` | Control plane + Rancher |
+| **Master Node** | IP fixo | `<IP_MASTER>` | Control plane |
 |  | vCPU | 4 cores | Mínimo para control plane |
-|  | RAM | 8GB | Recomendado para Rancher |
+|  | RAM | 8GB | Recomendado para control plane |
 |  | Disco | 80GB | Sistema + etcd + containers |
 |  | Função | Control plane | API server, scheduler, etcd |
 | **Worker Node 1** | IP fixo | `<IP_WORKER_1>` | Cargas de trabalho |
@@ -168,7 +161,6 @@ node-type: "worker"
 | **Chave SSH** | `~/.ssh/k8s-cluster-key` | Dedicada ao cluster |
 | **Usuário VM** | `<VM_USER>` | Usuário administrativo |
 | **Firewall** | Regras Proxmox + iptables | Controle de tráfego |
-| **Certificados** | cert-manager + Let's Encrypt | TLS automático |
 | **RBAC** | Kubernetes nativo | Controle de acesso granular |
 
 ### 📊 **Recursos Totais do Cluster**
@@ -208,8 +200,6 @@ flowchart TD
         G4[Configurar Master - kubeadm init]
         G5[Instalar Flannel CNI]
         G6[Join Workers ao Cluster]
-        G7[Instalar cert-manager]
-        G8[Instalar Rancher]
     end
     
     E --> E1
@@ -223,8 +213,6 @@ flowchart TD
     G3 --> G4
     G4 --> G5
     G5 --> G6
-    G6 --> G7
-    G7 --> G8
 ```
 
 ### ⏱️ **Timeline de Implantação**
@@ -238,9 +226,8 @@ flowchart TD
 | **Docker Install** | 3-4 min | Docker + containerd em todos os nós | 🔄 |
 | **Kubernetes** | 4-5 min | kubeadm, kubelet, kubectl | 🔄 |
 | **Cluster Setup** | 2-3 min | Master init + worker join | 🔄 |
-| **Rancher** | 3-5 min | Helm + cert-manager + Rancher | 🔄 |
 | **Validação** | 1 min | Testes de conectividade | ✅ |
-| **Total** | **15-20 min** | **Cluster completo funcionando** | ✅ |
+| **Total** | **12-15 min** | **Cluster completo funcionando** | ✅ |
 
 ### 🔄 **Comandos por Fase**
 
@@ -259,7 +246,7 @@ terraform apply    # Criar VMs + gerar inventário
 #### **Fase 3: Configuração**
 ```bash
 cd ansible && ansible-playbook -i inventory site.yml
-# Executa todas as roles: common → docker → kubernetes → master → worker → rancher
+# Executa todas as roles: common → docker → kubernetes → master → worker
 ```
 
 #### **Fase 4: Validação**
@@ -283,13 +270,12 @@ make check         # Verificação rápida
 
 ## 📋 **Resumo Executivo**
 
-Este projeto automatiza a criação de uma infraestrutura completa de Kubernetes no Proxmox VE, desde o provisionamento das máquinas virtuais até a configuração de um cluster funcional com interface de gerenciamento Rancher, seguindo padrões empresariais de segurança e organização.
+Este projeto automatiza a criação de uma infraestrutura completa de Kubernetes no Proxmox VE, desde o provisionamento das máquinas virtuais até a configuração de um cluster funcional, seguindo padrões empresariais de segurança e organização.
 
 ### 🎯 **Propósito**
 Fornecer uma solução **turnkey** para organizações que precisam de:
 - Clusters Kubernetes **prontos para produção**
 - **Automação completa** de deploy e configuração
-- **Interface moderna** de gerenciamento (Rancher)
 - **Conformidade** com melhores práticas de segurança
 - **Flexibilidade** para diferentes ambientes e escalas
 
@@ -336,8 +322,7 @@ terraform-proxmox-k8s/
 │       ├── docker/             # Docker + containerd
 │       ├── kubernetes/         # K8s base
 │       ├── kubernetes-master/  # Master config
-│       ├── kubernetes-worker/  # Worker config
-│       └── rancher/            # Rancher install
+│       └── kubernetes-worker/  # Worker config
 │
 ├── � Scripts Auxiliares
 │   ├── setup.sh               # Setup inicial
@@ -387,7 +372,6 @@ make clean            # Limpar temporários
 ### 🧪 **Desenvolvimento**
 - Ambiente K8s local completo
 - Testes de aplicações containerizadas
-- Experimentos com Rancher
 
 ### 🏫 **Laboratório/Educacional**
 - Treinamento em Kubernetes
@@ -404,12 +388,11 @@ make clean            # Limpar temporários
 ## 🚨 Próximos Passos após Instalação
 
 1. **✅ Verificar Status**: `make check`
-2. **🌐 Acessar Rancher**: https://SEU_MASTER_IP:8443
-3. **📋 Baixar kubeconfig**: `make get-kubeconfig`
-4. **🚀 Deploy aplicações**: Via Rancher UI ou kubectl
-5. **📊 Configurar monitoring**: Prometheus + Grafana
-6. **🔐 Configurar RBAC**: Usuários e permissões
-7. **💾 Estratégia backup**: Volumes e configurações
+2. **📋 Baixar kubeconfig**: `make get-kubeconfig`
+3. **🚀 Deploy aplicações**: Via kubectl
+4. **📊 Configurar monitoring**: Prometheus + Grafana
+5. **🔐 Configurar RBAC**: Usuários e permissões
+6. **💾 Estratégia backup**: Volumes e configurações
 
 ## 🆘 Troubleshooting
 
@@ -420,9 +403,6 @@ sudo cat /var/log/cloud-init-output.log
 
 # Kubelet
 sudo journalctl -u kubelet -f
-
-# Rancher
-kubectl logs -n cattle-system -l app=rancher
 
 # Ansible detalhado
 cd ansible && ansible-playbook -i inventory site.yml -vvv
@@ -438,7 +418,7 @@ kubectl get pods -A
 
 ---
 
-✨ **Enterprise Ready!** Seu cluster Kubernetes com Rancher seguro e bem organizado está pronto para produção!
+✨ **Enterprise Ready!** Seu cluster Kubernetes seguro e bem organizado está pronto para produção!
 
 
 ## 📁 Estrutura Completa
@@ -462,8 +442,7 @@ terraform-proxmox-k8s/
 │       ├── docker/             # Docker + containerd
 │       ├── kubernetes/         # K8s base
 │       ├── kubernetes-master/  # Master config
-│       ├── kubernetes-worker/  # Worker config
-│       └── rancher/            # Rancher install
+│       └── kubernetes-worker/  # Worker config
 │
 ├── 📜 Scripts Auxiliares
 │   ├── setup.sh               # Setup inicial
@@ -492,7 +471,6 @@ make destroy       # Destruir tudo
 make check         # Verificar status
 make ssh-master    # SSH no master
 make get-kubeconfig # Baixar kubeconfig
-make rancher-info  # Info do Rancher
 
 # Ansible específico
 make ansible-setup # Instalar dependências
@@ -514,7 +492,6 @@ make clean         # Limpar temporários
 - ✅ **Redução de custos** com infraestrutura
 - ✅ **Automação** completa de deployment
 - ✅ **Escalabilidade** horizontal automática  
-- ✅ **Interface amigável** com Rancher
 - ✅ **Conformidade** com padrões de segurança
 
 ### 🏫 **Instituições Educacionais**
@@ -621,7 +598,7 @@ echo 'cluster_name = "k8s-prod"' >> terraform.tfvars
 ### 🔌 **Integrações Disponíveis**
 
 #### **Monitoramento**
-- **Prometheus** + **Grafana** via Rancher Apps
+- **Prometheus** + **Grafana** via Helm charts
 - **AlertManager** para notificações
 - **Metrics Server** para HPA/VPA
 
@@ -646,12 +623,11 @@ echo 'cluster_name = "k8s-prod"' >> terraform.tfvars
 ### � **Após Implantação Básica**
 
 1. **✅ Verificar Cluster**: `make validate`
-2. **🌐 Acessar Rancher**: `https://<IP_MASTER>:8443`
-3. **📋 Configurar kubectl**: `make get-kubeconfig`
-4. **🚀 Deploy primeira aplicação**: Via Rancher Apps
-5. **📊 Habilitar monitoring**: Prometheus + Grafana
-6. **🔐 Configurar RBAC**: Usuários e permissões
-7. **💾 Implementar backup**: Longhorn ou external
+2. **📋 Configurar kubectl**: `make get-kubeconfig`
+3. **🚀 Deploy primeira aplicação**: Via kubectl/Helm
+4. **📊 Habilitar monitoring**: Prometheus + Grafana
+5. **🔐 Configurar RBAC**: Usuários e permissões
+6. **💾 Implementar backup**: Longhorn ou external
 
 ### 🚀 **Evoluções Futuras**
 
@@ -662,7 +638,6 @@ echo 'cluster_name = "k8s-prod"' >> terraform.tfvars
 - **Backup automatizado**: Velero integration
 
 #### **Versão 4.0 - Multi-Cluster**  
-- **Rancher Multi-Cluster**: Gerenciar múltiplos clusters
 - **Cluster Fleet**: GitOps para múltiplos ambientes
 - **Service Mesh**: Istio ou Linkerd
 - **Advanced Monitoring**: Observability stack completo
@@ -701,7 +676,7 @@ Este projeto representa uma **solução completa e enterprise-ready** para impla
 
 ### 🌟 **Resultado Final**
 
-Um **cluster Kubernetes de produção** funcionando em menos de 20 minutos, com interface web moderna (Rancher), documentação completa e flexibilidade para evoluir conforme necessário.
+Um **cluster Kubernetes de produção** funcionando em menos de 20 minutos, com documentação completa e flexibilidade para evoluir conforme necessário.
 
 ---
 
@@ -711,26 +686,23 @@ Um **cluster Kubernetes de produção** funcionando em menos de 20 minutos, com 
 
 [![Feito com ❤️ no CEFET-ES](https://img.shields.io/badge/Feito%20com%20❤️%20no-CEFET--ES-blue)](https://cefetes.br)
 
-*Infraestrutura como Código • Kubernetes • Rancher • Proxmox VE*
+*Infraestrutura como Código • Kubernetes • Proxmox VE*
 
 </div>
 
 ## 🚨 Próximos Passos após Instalação
 
-1. **Configurar DNS**: Adicionar rancher.local ao /etc/hosts
-2. **Explorar Rancher**: Interface web rica em funcionalidades
-3. **Deploy aplicações**: Usar catálogo do Rancher ou kubectl
-4. **Configurar monitoring**: Prometheus + Grafana via Rancher
-5. **Backup/Restore**: Configurar estratégias de backup
-6. **Segurança**: Configurar RBAC e políticas de rede
+1. **Deploy aplicações**: Usar kubectl/Helm
+2. **Configurar monitoring**: Prometheus + Grafana
+3. **Backup/Restore**: Configurar estratégias de backup
+4. **Segurança**: Configurar RBAC e políticas de rede
 
 ## 🆘 Suporte
 
 - **Issues**: Logs em `/var/log/cloud-init-output.log` nas VMs
 - **Kubernetes**: `kubectl logs` e `journalctl -u kubelet`
-- **Rancher**: Logs em namespace `cattle-system`
 - **Ansible**: Execute com `-vvv` para debug detalhado
 
 ---
 
-✨ **Pronto para usar!** Seu cluster Kubernetes com Rancher está a apenas alguns comandos de distância!
+✨ **Pronto para usar!** Seu cluster Kubernetes está a apenas alguns comandos de distância!

@@ -170,19 +170,6 @@ pvesh get /cluster/resources | jq '.[] | select(.tags | contains("managed-by=ter
 
 ### 🎯 **Outputs Informativos Implementados**
 
-#### **Acesso ao Rancher:**
-```hcl
-output "rancher_access" {
-  description = "Informações de acesso ao Rancher"
-  value = {
-    url      = "https://${local.master_ip}:8443"
-    username = "admin"
-    note     = "Use 'admin123' como senha inicial"
-  }
-  # Senha não exposta por segurança
-}
-```
-
 #### **Configuração kubectl:**
 ```hcl
 output "kubectl_config" {
@@ -345,7 +332,6 @@ terraform {
 📂 modules/
 ├── proxmox-vm/       # VM creation module
 ├── k8s-cluster/      # Cluster configuration
-├── rancher-install/  # Rancher deployment
 └── monitoring/       # Observability stack
 ```
 

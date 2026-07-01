@@ -30,7 +30,7 @@
 ## 📁 **Estrutura Final da Documentação**
 
 ```
-📚 DOCUMENTAÇÃO KUBERNETES RANCHER
+📚 DOCUMENTAÇÃO KUBERNETES
 │
 ├── 🎯 ENTRADA PRINCIPAL
 │   └── README.md (Portal principal - 5000+ linhas)

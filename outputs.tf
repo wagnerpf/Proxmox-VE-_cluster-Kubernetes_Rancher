@@ -77,16 +77,6 @@ output "cluster_tags" {
   value       = local.common_tags
 }
 
-output "rancher_access" {
-  description = "Informações de acesso ao Rancher"
-  value = {
-    url      = "https://${var.master_ips[0]}:8443"
-    username = "admin"
-    # Não expor senha nos outputs por segurança
-    note = "Use 'admin123' como senha inicial"
-  }
-}
-
 output "kubectl_config" {
   description = "Comando para configurar kubectl"
   value       = "scp ${var.vm_user}@${var.master_ips[0]}:~/.kube/config ~/.kube/config-${var.cluster_name}"

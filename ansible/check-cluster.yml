@@ -34,51 +34,14 @@
           - {{ pod.metadata.name }}: {{ pod.status.phase }}
           {% endfor %}
 
-    - name: Verificar pods do Rancher
-      kubernetes.core.k8s_info:
-        api_version: v1
-        kind: Pod
-        namespace: cattle-system
-        kubeconfig: "/home/{{ ansible_user }}/.kube/config"
-      register: rancher_pods
-      failed_when: false
-
-    - name: Mostrar pods do Rancher
+    - name: Mostrar resumo do cluster
       debug:
         msg: |
-          Pods do Rancher (cattle-system):
-          {% for pod in rancher_pods.resources %}
-          - {{ pod.metadata.name }}: {{ pod.status.phase }}
-          {% endfor %}
-      when: rancher_pods.resources is defined
+          🎉 Cluster Kubernetes configurado com sucesso!
 
-    - name: Verificar serviços
-      kubernetes.core.k8s_info:
-        api_version: v1
-        kind: Service
-        namespace: cattle-system
-        kubeconfig: "/home/{{ ansible_user }}/.kube/config"
-      register: rancher_services
-      failed_when: false
-
-    - name: Mostrar informações do Rancher
-      debug:
-        msg: |
-          🎉 Cluster Kubernetes + Rancher configurado com sucesso!
-          
           📊 Resumo:
           - Nós: {{ nodes.resources | length }}
           - Pods sistema: {{ system_pods.resources | length }}
-          - Pods Rancher: {{ rancher_pods.resources | length if rancher_pods.resources is defined else 0 }}
-          
-          🌐 Acesso ao Rancher:
-          - URL IP: https://{{ ansible_default_ipv4.address }}
-          - URL hostname: https://rancher.local
-          - Usuário: admin
-          - Senha: admin123
-          
-          ⚙️  Para configurar hostname local:
-          echo "{{ ansible_default_ipv4.address }} rancher.local" | sudo tee -a /etc/hosts
-          
+
           📁 Para obter kubeconfig:
           scp -i ~/.ssh/id_rsa {{ ansible_user }}@{{ ansible_default_ipv4.address }}:~/.kube/config ./kubeconfig

@@ -28,9 +28,3 @@
   become: yes
   roles:
     - kubernetes-worker
-
-- name: Instalar Rancher
-  hosts: masters[0]
-  become: yes
-  roles:
-    - rancher

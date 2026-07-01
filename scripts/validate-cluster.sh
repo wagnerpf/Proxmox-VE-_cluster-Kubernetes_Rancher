@@ -58,32 +58,11 @@ else
     run_on_master "kubectl get pods -n kube-system" || true
 fi
 
-# 4. Verificar Rancher
-echo "🐄 Verificando Rancher..."
-RANCHER_PODS=$(run_on_master "kubectl get pods -n cattle-system --no-headers 2>/dev/null | grep Running | wc -l" || echo "0")
-
-if [ "$RANCHER_PODS" -ge 3 ]; then
-    echo "✅ Rancher funcionando ($RANCHER_PODS pods)"
-    
-    # Verificar port-forward
-    if run_on_master "ss -tlnp | grep :8443" &>/dev/null; then
-        echo "✅ Port-forward ativo na porta 8443"
-        echo "🌐 Acesse: https://$MASTER_IP:8443"
-        echo "👤 Usuário: admin"
-        echo "🔑 Senha: admin123"
-    else
-        echo "⚠️  Port-forward não encontrado"
-        echo "💡 Execute: kubectl port-forward -n cattle-system svc/rancher 8443:443"
-    fi
-else
-    echo "⚠️  Rancher pode não estar funcionando"
-fi
-
-# 5. Verificar recursos do cluster
+# 4. Verificar recursos do cluster
 echo "📊 Recursos do cluster..."
 run_on_master "kubectl top nodes 2>/dev/null" || echo "⚠️  Metrics server não disponível"
 
-# 6. Teste de conectividade interna
+# 5. Teste de conectividade interna
 echo "🔗 Testando conectividade interna..."
 if run_on_master "kubectl run test-pod --image=nginx --restart=Never --rm -i --timeout=60s -- echo 'Test OK'" &>/dev/null; then
     echo "✅ Conectividade interna funcionando"
@@ -97,6 +76,5 @@ echo ""
 echo "📋 Resumo do cluster:"
 echo "   • Nós: $NODES"
 echo "   • Pods sistema: $SYSTEM_PODS"
-echo "   • Rancher: $RANCHER_PODS pods"
-echo "   • Acesso: https://$MASTER_IP:8443"
+echo "   • API: https://$MASTER_IP:6443"
 echo ""

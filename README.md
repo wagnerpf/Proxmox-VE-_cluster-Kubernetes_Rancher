@@ -1,12 +1,11 @@
-# 🚀 Cluster Kubernetes no Proxmox VE com Rancher
+# 🚀 Cluster Kubernetes no Proxmox VE
 
 [![Terraform](https://img.shields.io/badge/Terraform-v1.0+-blue?logo=terraform)](https://terraform.io)
 [![Ansible](https://img.shields.io/badge/Ansible-v2.12+-red?logo=ansible)](https://ansible.com)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.28.2-blue?logo=kubernetes)](https://kubernetes.io)
-[![Rancher](https://img.shields.io/badge/Rancher-v2.7.5+-green?logo=rancher)](https://rancher.com)
 [![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04_LTS-orange?logo=ubuntu)](https://ubuntu.com)
 
-> **Infraestrutura como Código** completa para provisionar e configurar um cluster Kubernetes empresarial no Proxmox VE, com interface de gerenciamento Rancher e automação total via Terraform + Ansible.
+> **Infraestrutura como Código** completa para provisionar e configurar um cluster Kubernetes empresarial no Proxmox VE, com automação total via Terraform + Ansible.
 
 ## 🎯 **Objetivo**
 
@@ -52,7 +51,6 @@ graph TB
     end
     
     subgraph "Management"
-      R[Rancher UI<br/>:8443]
       K[Kubernetes API<br/>:6443]
     end
   end
@@ -60,7 +58,6 @@ graph TB
   PM --> M1
   PM --> W1
   PM --> W2
-  M1 --> R
   M1 --> K
 ```
 
@@ -68,7 +65,7 @@ graph TB
 
 | Componente | IP Fixo | vCPU | RAM | Disco | Função |
 |------------|---------|------|-----|-------|--------|
-| **Master** | `<IP Master>` | 4 | 8GB | 80GB | Control Plane + Rancher |
+| **Master** | `<IP Master>` | 4 | 8GB | 80GB | Control Plane |
 | **Worker 1** | `<IP Worker 1>` | 4 | 16GB | 50GB | Cargas de trabalho |
 | **Worker 2** | `<IP Worker 2>` | 4 | 16GB | 50GB | Cargas de trabalho |
 
@@ -76,7 +73,6 @@ graph TB
 
 | Serviço | URL/Endpoint | Credenciais | Descrição |
 |---------|--------------|-------------|-----------|
-| **Rancher UI** | `https://<IP Master>:8443` | `admin` / `admin123` | Interface de gerenciamento |
 | **Kubernetes API** | `https://<IP Master>:6443` | Via kubeconfig | API do cluster |
 | **SSH Master** | `ssh usuario@<IP Master>` | Chave SSH | Acesso direto ao master |
 | **SSH Workers** | `ssh usuario@<IP Worker 1-2>` | Chave SSH | Acesso direto aos workers |
@@ -239,14 +235,6 @@ make ping
 make status
 ```
 
-### 🌐 **Acesso ao Rancher**
-
-1. **Abrir navegador**: `https://<IP Master>:8443`
-2. **Credenciais iniciais**:
-   - **Usuário**: `admin`
-   - **Senha**: `admin123`
-3. **Configurar nova senha** (recomendado na primeira vez)
-
 ### 📋 **Configurar kubectl Local**
 
 ```bash
@@ -287,7 +275,6 @@ make check           # Verificação rápida
 ### 🔧 **Manutenção** 
 ```bash
 make clean-ssh-keys  # Limpar known_hosts (útil para VMs recriadas)
-make rancher-info    # Informações de acesso ao Rancher
 make urls            # Todas as URLs de acesso
 ```
 
@@ -319,8 +306,7 @@ make destroy         # Destruir toda a infraestrutura
 │       ├── docker/                  # Docker + containerd
 │       ├── kubernetes/              # Kubernetes base
 │       ├── kubernetes-master/       # Configuração do master
-│       ├── kubernetes-worker/       # Configuração dos workers
-│       └── rancher/                 # Instalação do Rancher
+│       └── kubernetes-worker/       # Configuração dos workers
 │
 ├── 📜 Scripts Auxiliares
 │   ├── install-prerequisites.sh     # Instalação de dependências
@@ -448,18 +434,6 @@ terraform destroy
 - **Kubernetes 1.28**: Orquestrador de containers
 - **Flannel**: Plugin de rede para pods
 - **containerd**: Container runtime interface
-- **cert-manager**: Gerenciamento de certificados
-- **Rancher**: Plataforma de gerenciamento Kubernetes
-
-## Rancher - Funcionalidades
-
-O Rancher fornece:
-- Interface web para gerenciar clusters Kubernetes
-- Gestão de usuários e permissões
-- Monitoramento e alertas
-- Catálogo de aplicações
-- Backup e restore
-- Gestão de projetos e namespaces
 
 ## 🆘 **Troubleshooting**
 
@@ -502,18 +476,6 @@ kubectl --kubeconfig=./kubeconfig get pods -n kube-system
 ansible all -i ansible/inventory -m ping
 ```
 
-#### **Rancher não acessa**
-```bash
-# Status dos pods do Rancher
-kubectl --kubeconfig=./kubeconfig get pods -n cattle-system
-
-# Logs do Rancher
-kubectl --kubeconfig=./kubeconfig logs -n cattle-system -l app=rancher
-
-# Verificar cert-manager
-kubectl --kubeconfig=./kubeconfig get pods -n cert-manager
-```
-
 ### 🔧 **Comandos de Diagnóstico**
 
 ```bash
@@ -539,9 +501,6 @@ pvesh get /cluster/resources --type storage
 ```bash
 # Reiniciar serviços Kubernetes
 sudo systemctl restart kubelet
-
-# Reiniciar deployment do Rancher  
-kubectl rollout restart deployment/rancher -n cattle-system
 
 # Recriar cluster (destruir e criar novamente)
 make destroy
@@ -582,7 +541,6 @@ cp terraform.tfstate backup/terraform.tfstate.$(date +%Y%m%d)
 ### 🔗 **Links Úteis**
 - [Documentação Terraform Proxmox](https://registry.terraform.io/providers/Telmate/proxmox/latest/docs)
 - [Guia Ansible Kubernetes](https://docs.ansible.com/ansible/latest/collections/kubernetes/core/)
-- [Documentação Rancher](https://rancher.com/docs/rancher/v2.x/en/)
 - [Kubernetes Best Practices](https://kubernetes.io/docs/setup/best-practices/)
 
 ### 📖 **Documentação do Projeto**
@@ -601,7 +559,6 @@ Este projeto fornece uma **infraestrutura completa** e **pronta para produção*
 
 ✅ **Automação total** do provisionamento à configuração  
 ✅ **Segurança enterprise** com SSH keys e validações  
-✅ **Interface moderna** com Rancher para gerenciamento  
 ✅ **Documentação completa** e melhores práticas  
 ✅ **Flexibilidade** para diferentes ambientes e escalas  
 

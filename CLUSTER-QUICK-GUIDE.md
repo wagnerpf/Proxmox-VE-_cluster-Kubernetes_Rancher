@@ -1,8 +1,8 @@
-# ⚡ Guia Rápido: Kubernetes + Rancher no Proxmox VE
+# ⚡ Guia Rápido: Kubernetes no Proxmox VE
 
-> **Deploy completo em 15 minutos** - Cluster Kubernetes empresarial com interface Rancher
+> **Deploy completo em 15 minutos** - Cluster Kubernetes empresarial
 
-## 🎯 **Setup Rápido - 4 Comandos**
+## 🎯 **Setup Rápido - 3 Comandos**
 
 ```bash
 # 1️⃣ Preparar autenticação
@@ -13,9 +13,6 @@ cp terraform.tfvars.example terraform.tfvars && nano terraform.tfvars
 
 # 3️⃣ Instalação completa
 make install
-
-# 4️⃣ Acessar Rancher
-open https://<IP_MASTER>:8443  # admin / admin123
 ```
 
 **⏱️ Tempo total:** 15-20 minutos
@@ -111,17 +108,11 @@ make validate
    ├── Control plane configurado
    ├── Workers unidos ao cluster
    └── Flannel CNI funcionando
-
-✅ Rancher v2.7.5+ instalado
-   ├── Interface web: https://<IP_MASTER>:8443
-   ├── Credenciais: admin / admin123
-   └── cert-manager para certificados
 ```
 
 ### 🔗 **Pontos de Acesso**
 | Serviço | URL | Credenciais |
 |---------|-----|-------------|
-| **Rancher UI** | `https://<IP_MASTER>:8443` | `admin` / `admin123` |
 | **Kubernetes API** | `https://<IP_MASTER>:6443` | Via kubeconfig |
 | **SSH Master** | `ssh <VM_USER>@<IP_MASTER>` | Chave SSH |
 
@@ -142,9 +133,6 @@ kubectl --kubeconfig=./kubeconfig get nodes
 
 # Pods do sistema
 kubectl --kubeconfig=./kubeconfig get pods -A
-
-# Status do Rancher
-kubectl --kubeconfig=./kubeconfig get pods -n cattle-system
 ```
 
 ### 📋 **Saída Esperada**
@@ -154,12 +142,6 @@ NAME                         STATUS   ROLES           AGE   VERSION
 k8s-cluster-exemplo-master-1   Ready    control-plane   5m    v1.28.2
 k8s-cluster-exemplo-worker-1   Ready    <none>          4m    v1.28.2  
 k8s-cluster-exemplo-worker-2   Ready    <none>          4m    v1.28.2
-
-$ kubectl get pods -n cattle-system
-NAME                       READY   STATUS    RESTARTS   AGE
-rancher-6f4c8c5d4b-xyz12   1/1     Running   0          3m
-rancher-6f4c8c5d4b-abc34   1/1     Running   0          3m
-rancher-6f4c8c5d4b-def56   1/1     Running   0          3m
 ```
 
 ---
@@ -177,7 +159,6 @@ make check          # Verificação rápida
 ```bash
 make ssh-master     # SSH no master node
 make get-kubeconfig # Baixar kubeconfig
-make rancher-info   # Informações do Rancher
 ```
 
 ### 🧹 **Manutenção**
@@ -277,11 +258,10 @@ make install
 ## 🎉 **Próximos Passos**
 
 ### 🚀 **Após Instalação**
-1. **Explore Rancher**: Apps, Projects, Users
-2. **Deploy primeira app**: Via Rancher Apps Catalog
-3. **Configure monitoring**: Prometheus + Grafana
-4. **Setup backup**: Longhorn ou external
-5. **Implemente CI/CD**: GitLab/Jenkins integration
+1. **Deploy primeira app**: `make deploy` (exemplo via `scripts/deploy-example.sh`)
+2. **Configure monitoring**: Prometheus + Grafana
+3. **Setup backup**: Longhorn ou external
+4. **Implemente CI/CD**: GitLab/Jenkins integration
 
 ### 📚 **Documentação Adicional**
 - `README.md` - Documentação completa
@@ -354,9 +334,6 @@ kubectl --kubeconfig=./ansible/kubeconfig get nodes -o wide
 
 # Pods do sistema
 kubectl --kubeconfig=./ansible/kubeconfig get pods -A
-
-# Rancher status
-kubectl --kubeconfig=./ansible/kubeconfig get pods -n cattle-system
 ```
 
 ## 📋 Decisão por Tamanho de Cluster
@@ -380,8 +357,8 @@ proxmox_node = "your-node-here"
 make init
 make apply
 
-# 4. Acessar Rancher
-make rancher-info
+# 4. Verificar cluster
+make validate
 ```
 
 ## 🔍 Verificações Úteis

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Script de setup inicial para o projeto Terraform + Ansible + Proxmox + Kubernetes + Rancher
+# Script de setup inicial para o projeto Terraform + Ansible + Proxmox + Kubernetes
 
 set -e
 
-echo "=== Setup do Projeto Terraform + Ansible + Proxmox + Kubernetes + Rancher ==="
+echo "=== Setup do Projeto Terraform + Ansible + Proxmox + Kubernetes ==="
 
 # Verificar dependências
 echo "Verificando dependências..."
@@ -81,7 +81,6 @@ echo "2. Execute: make init"
 echo "3. Execute: make plan"
 echo "4. Execute: make apply"
 echo "5. Aguarde a configuração completar"
-echo "6. Execute: make rancher-info para ver como acessar o Rancher"
 echo ""
 echo "Comandos úteis:"
 echo "  make help          - Ver todos os comandos disponíveis"

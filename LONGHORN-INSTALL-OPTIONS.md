@@ -38,7 +38,7 @@ make install-longhorn-ansible
 ```mermaid
 graph TD
     A[1. Terraform] --> B[2. Ansible Base]
-    B --> C[3. Cluster K8s + Rancher]
+    B --> C[3. Cluster K8s]
     C --> D{Escolher Longhorn}
     D -->|Opção 1| E[Script Bash]
     D -->|Opção 2| F[Ansible Role]

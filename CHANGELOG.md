@@ -1,5 +1,13 @@
 # 📋 Changelog - Infraestrutura Kubernetes
 
+## [2026-07-01] - 🗑️ Remoção do Rancher
+
+- **Role Ansible `rancher` removida**: instalação de Helm, cert-manager e Rancher não faz mais parte do playbook (`ansible/site.yml`).
+- **Variáveis removidas**: `rancher_version`, `rancher_hostname`, `rancher_bootstrap_password` e `cert_manager_version` (`ansible/group_vars/all.yml`).
+- **Output `rancher_access` removido** (`outputs.tf`).
+- **Scripts e Makefile**: removidas checagens e comandos relacionados ao Rancher (`check-cluster.yml`, `validate-cluster.sh`, `setup.sh`, `create-template.sh`, `make rancher-info`, `make urls`, `make status`, `make logs`).
+- Projeto passa a entregar somente o cluster Kubernetes (kubeadm + Flannel) provisionado via Terraform/Ansible.
+
 ## [2025-01-13] - 📚 Reforma Completa da Documentação
 
 ### 🎯 **MELHORIA PRINCIPAL: Reorganização e Escrita Profissional**

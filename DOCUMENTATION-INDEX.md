@@ -1,6 +1,6 @@
 # 📚 Índice da Documentação
 
-> **Guia completo de navegação pelos documentos do projeto Kubernetes + Proxmox VE + Rancher**
+> **Guia completo de navegação pelos documentos do projeto Kubernetes + Proxmox VE**
 
 ## 🎯 **Por Onde Começar?**
 
@@ -148,7 +148,6 @@ graph TD
 - **kubeadm**: Ferramenta para bootstrap de clusters Kubernetes
 
 ### 🎛️ **Gerenciamento**
-- **Rancher**: Plataforma de gerenciamento Kubernetes
 - **cert-manager**: Controlador para gerenciamento automático de certificados
 - **Helm**: Gerenciador de pacotes para Kubernetes
 

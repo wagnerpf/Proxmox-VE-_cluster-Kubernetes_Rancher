@@ -40,7 +40,6 @@ help:
 	@echo "  longhorn-status          - Status detalhado do Longhorn"
 	@echo ""
 	@echo "🌐 ACESSO:"
-	@echo "  rancher-info      - Mostrar informações do Rancher"
 	@echo "  ssh-master        - Conectar via SSH no master"
 	@echo "  urls              - Mostrar todas as URLs de acesso"
 	@echo ""
@@ -92,14 +91,6 @@ urls:
 	@echo ""
 	@echo "📊 Kubernetes API:"
 	@echo "   https://SEU_MASTER_IP:6443"
-	@echo ""
-	@echo "🎛️  Rancher UI (após instalação):"
-	@echo "   https://SEU_MASTER_IP"
-	@echo "   https://SEU_MASTER_IP:8443"
-	@echo ""
-	@echo "🔐 Para acessar o Rancher:"
-	@echo "   Usuário: admin"
-	@echo "   Senha: Use 'make rancher-info' para ver a senha inicial"
 
 # IP verification
 show-ips:
@@ -164,11 +155,6 @@ status:
 		echo "❌ Kubeconfig não encontrado"; \
 	fi
 	@echo ""
-	@echo "🌐 RANCHER:"
-	@if [ -f $(KUBECONFIG_FILE) ]; then \
-		KUBECONFIG=$(KUBECONFIG_FILE) $(KUBECTL) get pods -n cattle-system 2>/dev/null | grep -c Running | xargs echo "   📊 Pods rodando:" || echo "❌ Rancher não instalado"; \
-	fi
-	@echo ""
 
 destroy:
 	@echo "Destruindo infraestrutura..."
@@ -191,20 +177,6 @@ check:
 	@./scripts/check-cluster.sh
 
 # Utilities
-rancher-info:
-	@echo "🌐 Informações do Rancher:"
-	@echo ""
-	@echo "📊 URLs de Acesso:"
-	@echo "   https://SEU_MASTER_IP"
-	@echo "   https://SEU_MASTER_IP:8443"
-	@echo ""
-	@echo "🔐 Credenciais:"
-	@echo "   Usuário: admin"
-	@echo "   Senha: admin123 (padrão)"
-	@echo ""
-	@echo "💡 Para obter a senha real do bootstrap:"
-	@echo "   ssh -i ~/.ssh/k8s-cluster-key -o StrictHostKeyChecking=no SEU_USUARIO@SEU_MASTER_IP \"sudo docker logs rancher-server 2>&1 | grep 'Bootstrap Password:' | tail -1\""
-
 ssh-master:
 	@echo "Conectando no master via SSH..."
 	@echo "(Configure o IP e usuário corretos em terraform.tfvars)"
@@ -239,7 +211,6 @@ ping:
 logs:
 	@echo "📋 Coletando logs do cluster..."
 	@mkdir -p logs
-	@cd ansible && ansible masters -i inventory -m shell -a "kubectl logs -n cattle-system deployment/rancher --tail=50" > ../logs/rancher.log 2>/dev/null || true
 	@cd ansible && ansible masters -i inventory -m shell -a "kubectl get events --all-namespaces --sort-by='.lastTimestamp'" > ../logs/events.log 2>/dev/null || true
 	@echo "✅ Logs salvos em logs/"
 
