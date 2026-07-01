@@ -12,8 +12,8 @@
 ### 🔧 **Implementação**
 1. **Preparar ambiente** (README.md - Pré-requisitos)
 2. **Configurar variáveis** (terraform.tfvars)
-3. **Executar instalação** (`make install`)
-4. **Verificar resultado** (`make validate`)
+3. **Executar instalação** (`terraform apply` + `ansible-playbook -i inventory site.yml`)
+4. **Verificar resultado** (`./scripts/validate-cluster.sh`)
 
 ---
 
@@ -163,13 +163,14 @@ graph TD
 ### 📖 **README.md**
 ```bash
 # Comando principal
-make install
+terraform apply
+cd ansible && ansible-playbook -i inventory site.yml && cd ..
 
 # Verificação
-make validate
+./scripts/validate-cluster.sh
 
 # Acesso
-make ssh-master
+ssh -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_MASTER>
 ```
 
 ### ⚡ **CLUSTER-QUICK-GUIDE.md**
@@ -177,7 +178,8 @@ make ssh-master
 # Setup express
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/k8s-cluster-key
 cp terraform.tfvars.example terraform.tfvars
-make install
+terraform init && terraform apply
+cd ansible && ansible-playbook -i inventory site.yml && cd ..
 ```
 
 ### 🛡️ **BEST-PRACTICES.md**

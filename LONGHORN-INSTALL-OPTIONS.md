@@ -8,12 +8,12 @@
 
 ### **1. 📜 Via Script (Atual - Recomendado)**
 ```bash
-make install-longhorn
+./scripts/install-longhorn.sh
 ```
 
 ### **2. 🤖 Via Ansible (Novo - Opcional)**
 ```bash
-make install-longhorn-ansible
+cd ansible && ansible-playbook -i inventory longhorn-install.yml
 ```
 
 ---
@@ -75,25 +75,25 @@ graph TD
 ### **Método 1: Script (Simples)**
 ```bash
 # Após cluster estar funcionando
-make validate
+./scripts/validate-cluster.sh
 
 # Instalar Longhorn
-make install-longhorn
+./scripts/install-longhorn.sh
 
 # Testar
-make test-longhorn
+./scripts/test-longhorn.sh
 ```
 
 ### **Método 2: Ansible (Avançado)**
 ```bash
 # Após cluster estar funcionando
-make validate
+./scripts/validate-cluster.sh
 
 # Instalar via Ansible
-make install-longhorn-ansible
+cd ansible && ansible-playbook -i inventory longhorn-install.yml && cd ..
 
 # Testar
-make test-longhorn
+./scripts/test-longhorn.sh
 ```
 
 ---
@@ -141,37 +141,34 @@ longhorn_wait_timeout: 600
 ## 📝 **Comandos Completos**
 
 ```bash
-# Ver todas as opções
-make help
-
 # Status do cluster
-make validate
-make status
+./scripts/validate-cluster.sh
+terraform show
 
 # Longhorn via Script
-make install-longhorn
-make test-longhorn
-make longhorn-status
-make longhorn-ui
+./scripts/install-longhorn.sh
+./scripts/test-longhorn.sh
+./scripts/longhorn-status.sh
+kubectl port-forward -n longhorn-system svc/longhorn-frontend 8080:80
 
 # Longhorn via Ansible
-make install-longhorn-ansible
-make test-longhorn
-make longhorn-status
-make longhorn-ui
+cd ansible && ansible-playbook -i inventory longhorn-install.yml && cd ..
+./scripts/test-longhorn.sh
+./scripts/longhorn-status.sh
+kubectl port-forward -n longhorn-system svc/longhorn-frontend 8080:80
 ```
 
 ---
 
 ## 🎯 **Recomendação Final**
 
-**Para a maioria dos usuários**: Use `make install-longhorn` (script)
+**Para a maioria dos usuários**: Use `./scripts/install-longhorn.sh` (script)
 - ✅ Mais simples
 - ✅ Debug mais fácil  
 - ✅ Menos dependências
 - ✅ Funciona igual
 
-**Para ambientes enterprise**: Use `make install-longhorn-ansible`
+**Para ambientes enterprise**: Use `ansible-playbook -i inventory longhorn-install.yml`
 - ✅ Padronização total
 - ✅ Integração com pipelines
 - ✅ Configuração declarativa

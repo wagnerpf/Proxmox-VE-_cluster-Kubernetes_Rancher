@@ -36,7 +36,7 @@ echo
 log_info "Verificando se Longhorn está instalado..."
 if ! kubectl get storageclass longhorn &> /dev/null; then
     log_error "Storage class 'longhorn' não encontrada"
-    log_info "Execute 'make install-longhorn' primeiro"
+    log_info "Execute './scripts/install-longhorn.sh' primeiro"
     exit 1
 fi
 

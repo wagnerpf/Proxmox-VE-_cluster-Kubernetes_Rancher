@@ -154,7 +154,10 @@ cp terraform.tfvars.example terraform.tfvars
 nano terraform.tfvars  # Editar com suas configurações
 
 # 4. Instalação completa
-make install
+terraform init
+terraform apply
+cd ansible && ansible-playbook -i inventory site.yml && cd ..
+./scripts/validate-cluster.sh
 ```
 
 **⏱️ Tempo estimado:** 15-20 minutos
@@ -205,19 +208,24 @@ Se preferir controle total:
 
 ```bash
 # 1. Instalar dependências
-make prerequisites
+chmod +x scripts/install-prerequisites.sh
+./scripts/install-prerequisites.sh
 
 # 2. Inicializar Terraform
-make init
+terraform init
 
 # 3. Visualizar plano
-make plan
+terraform plan
 
 # 4. Aplicar infraestrutura
-make apply
+terraform apply
 
-# 5. Verificar cluster
-make validate
+# 5. Configurar o cluster via Ansible
+cd ansible && ansible-playbook -i inventory site.yml && cd ..
+
+# 6. Verificar cluster
+chmod +x scripts/validate-cluster.sh
+./scripts/validate-cluster.sh
 ```
 
 ## 🎉 **Pós-Instalação**
@@ -226,20 +234,20 @@ make validate
 
 ```bash
 # Status geral do cluster
-make validate
+./scripts/validate-cluster.sh
 
 # Verificar conectividade SSH
-make ping
+cd ansible && ansible all -i inventory -m ping && cd ..
 
-# Status detalhado dos recursos
-make status
+# Status dos recursos no Proxmox
+terraform show
 ```
 
 ### 📋 **Configurar kubectl Local**
 
 ```bash
 # Baixar kubeconfig do cluster
-make get-kubeconfig
+scp -i ~/.ssh/k8s-cluster-key usuario@<IP Master>:/home/usuario/.kube/config ./kubeconfig
 
 # Verificar funcionamento
 kubectl --kubeconfig=./kubeconfig get nodes
@@ -254,8 +262,7 @@ kubectl get nodes
 
 ```bash
 # Master node
-make ssh-master
-# ou: ssh -i ~/.ssh/k8s-cluster-key usuario@<IP Master>
+ssh -i ~/.ssh/k8s-cluster-key usuario@<IP Master>
 
 # Worker nodes
 ssh -i ~/.ssh/k8s-cluster-key usuario@<IP Worker 1>
@@ -266,22 +273,21 @@ ssh -i ~/.ssh/k8s-cluster-key usuario@<IP Worker 2>
 
 ### 📊 **Monitoramento**
 ```bash
-make status           # Status da infraestrutura
-make validate         # Validar cluster completo
-make logs            # Ver logs do deployment
-make check           # Verificação rápida
+terraform show                          # Status da infraestrutura
+./scripts/validate-cluster.sh           # Validar cluster completo
+kubectl --kubeconfig=./kubeconfig get pods -A  # Pods do cluster
+./scripts/check-cluster.sh              # Verificação rápida
 ```
 
-### 🔧 **Manutenção** 
+### 🔧 **Manutenção**
 ```bash
-make clean-ssh-keys  # Limpar known_hosts (útil para VMs recriadas)
-make urls            # Todas as URLs de acesso
+./scripts/clean-ssh-keys.sh   # Limpar known_hosts (útil para VMs recriadas)
 ```
 
 ### 🧹 **Limpeza**
 ```bash
-make clean           # Limpar arquivos temporários
-make destroy         # Destruir toda a infraestrutura
+rm -f ansible/inventory ./kubeconfig .terraform.lock.hcl   # Limpar arquivos temporários
+terraform destroy                                          # Destruir toda a infraestrutura
 ```
 
 ## 📁 **Estrutura do Projeto**
@@ -312,10 +318,10 @@ make destroy         # Destruir toda a infraestrutura
 │   ├── install-prerequisites.sh     # Instalação de dependências
 │   ├── validate-cluster.sh          # Validação do cluster
 │   ├── create-template.sh           # Criação de templates
-│   └── check-cluster.sh             # Verificação rápida
+│   ├── check-cluster.sh             # Verificação rápida
+│   └── clean-ssh-keys.sh            # Limpar known_hosts
 │
 ├── 🛠️  Automação
-│   ├── Makefile                     # Comandos simplificados
 │   └── setup.sh                     # Setup inicial
 │
 ├── 📚 Documentação
@@ -454,10 +460,10 @@ ssh root@seu-node "qm status <VMID>"
 #### **Erro de SSH/Conexão**
 ```bash
 # Limpar known_hosts (VMs recriadas)
-make clean-ssh-keys
+./scripts/clean-ssh-keys.sh
 
 # Testar conectividade
-make ping
+cd ansible && ansible all -i inventory -m ping && cd ..
 
 # Verificar chaves SSH
 ssh-add -l
@@ -480,10 +486,11 @@ ansible all -i ansible/inventory -m ping
 
 ```bash
 # Status geral completo
-make status
+terraform show
+kubectl --kubeconfig=./kubeconfig get nodes
 
 # Logs detalhados
-make logs
+cd ansible && ansible masters -i inventory -m shell -a "kubectl get events --all-namespaces --sort-by='.lastTimestamp'" && cd ..
 
 # Debug do cloud-init (nas VMs)
 sudo cat /var/log/cloud-init-output.log
@@ -503,8 +510,9 @@ pvesh get /cluster/resources --type storage
 sudo systemctl restart kubelet
 
 # Recriar cluster (destruir e criar novamente)
-make destroy
-make install
+terraform destroy
+terraform apply
+cd ansible && ansible-playbook -i inventory site.yml && cd ..
 
 # Aplicar apenas configuração (sem destruir VMs)
 cd ansible && ansible-playbook -i inventory site.yml

@@ -174,11 +174,11 @@ node-type: "worker"
 
 ## 🚀 **Fluxo de Implantação**
 
-### 📋 **Processo Automatizado (make install)**
+### 📋 **Processo Automatizado (terraform + ansible-playbook)**
 
 ```mermaid
 flowchart TD
-    A[🚀 make install] --> B[📦 Instalar Prerequisites]
+    A[🚀 Início] --> B[📦 Instalar Prerequisites]
     B --> C[🔧 Terraform Init]
     C --> D[📊 Terraform Plan]
     D --> E[🏗️ Terraform Apply]
@@ -233,13 +233,13 @@ flowchart TD
 
 #### **Fase 1: Preparação**
 ```bash
-make prerequisites  # Instala collections + Python packages
-make init          # Inicializar Terraform backend
+./scripts/install-prerequisites.sh  # Instala collections + Python packages
+terraform init                      # Inicializar Terraform backend
 ```
 
 #### **Fase 2: Infraestrutura**  
 ```bash
-make plan          # Revisar mudanças (opcional)
+terraform plan     # Revisar mudanças (opcional)
 terraform apply    # Criar VMs + gerar inventário
 ```
 
@@ -251,8 +251,8 @@ cd ansible && ansible-playbook -i inventory site.yml
 
 #### **Fase 4: Validação**
 ```bash
-make validate      # Testar cluster completo
-make check         # Verificação rápida
+./scripts/validate-cluster.sh   # Testar cluster completo
+./scripts/check-cluster.sh      # Verificação rápida
 ```
 
 ## 📊 Configuração Padrão (Rede Genérica)
@@ -328,10 +328,10 @@ terraform-proxmox-k8s/
 │   ├── setup.sh               # Setup inicial
 │   ├── check-cluster.sh       # Verificação
 │   ├── validate-cluster.sh    # Validação SSH key
-│   └── create-template.sh     # Template automation
+│   ├── create-template.sh     # Template automation
+│   └── clean-ssh-keys.sh      # Limpar known_hosts
 │
 ├── 🛠️  Automação
-│   ├── Makefile               # Comandos + delay otimizado
 │   └── .gitignore             # Arquivos ignorados
 │
 └── 📚 Documentação
@@ -346,25 +346,26 @@ terraform-proxmox-k8s/
 
 ```bash
 # === INSTALAÇÃO ===
-make prerequisites     # Instalar dependências
-make init             # Inicializar Terraform
-make install          # Instalação completa (com delay)
-make plan             # Planejar mudanças
+./scripts/install-prerequisites.sh   # Instalar dependências
+terraform init                       # Inicializar Terraform
+terraform apply                      # Provisionar VMs
+cd ansible && ansible-playbook -i inventory site.yml && cd ..  # Configurar cluster
+terraform plan                       # Planejar mudanças
 
 # === VERIFICAÇÃO ===
-make check            # Status do cluster
-make validate         # Validar configuração
-make status           # Status dos recursos
+./scripts/check-cluster.sh    # Status do cluster
+./scripts/validate-cluster.sh # Validar configuração
+terraform show                # Status dos recursos
 
 # === ACESSO ===
-make ssh-master       # SSH no master
-make ssh-worker-1     # SSH no worker 1
-make get-kubeconfig   # Baixar kubeconfig
+ssh -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_MASTER>    # SSH no master
+ssh -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_WORKER_1>  # SSH no worker 1
+scp -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_MASTER>:/home/<VM_USER>/.kube/config ./kubeconfig  # Baixar kubeconfig
 
 # === MANUTENÇÃO ===
-make clean-ssh-keys   # Limpar known_hosts
-make destroy          # Destruir infraestrutura
-make clean            # Limpar temporários
+./scripts/clean-ssh-keys.sh   # Limpar known_hosts
+terraform destroy             # Destruir infraestrutura
+rm -f ansible/inventory ./kubeconfig .terraform.lock.hcl  # Limpar temporários
 ```
 
 ## 🎯 Casos de Uso
@@ -387,8 +388,8 @@ make clean            # Limpar temporários
 
 ## 🚨 Próximos Passos após Instalação
 
-1. **✅ Verificar Status**: `make check`
-2. **📋 Baixar kubeconfig**: `make get-kubeconfig`
+1. **✅ Verificar Status**: `./scripts/check-cluster.sh`
+2. **📋 Baixar kubeconfig**: `scp -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_MASTER>:/home/<VM_USER>/.kube/config ./kubeconfig`
 3. **🚀 Deploy aplicações**: Via kubectl
 4. **📊 Configurar monitoring**: Prometheus + Grafana
 5. **🔐 Configurar RBAC**: Usuários e permissões
@@ -410,8 +411,8 @@ cd ansible && ansible-playbook -i inventory site.yml -vvv
 
 ### 🚑 **Comandos de Diagnóstico**
 ```bash
-make status           # Status geral
-make logs            # Logs de deployment
+terraform show   # Status geral
+cd ansible && ansible masters -i inventory -m shell -a "kubectl get events --all-namespaces --sort-by='.lastTimestamp'" && cd ..  # Logs de deployment
 kubectl get nodes -o wide
 kubectl get pods -A
 ```
@@ -450,7 +451,6 @@ terraform-proxmox-k8s/
 │   └── deploy-example.sh      # Deploy exemplo
 │
 ├── 🛠️  Automação
-│   ├── Makefile               # Comandos automatizados
 │   └── .gitignore             # Arquivos ignorados
 │
 └── 📚 Documentação
@@ -462,22 +462,22 @@ terraform-proxmox-k8s/
 
 ```bash
 # Gerenciamento da infraestrutura
-make init          # Inicializar Terraform
-make plan          # Planejar mudanças
-make apply         # Criar infraestrutura
-make destroy       # Destruir tudo
+terraform init     # Inicializar Terraform
+terraform plan     # Planejar mudanças
+terraform apply    # Criar infraestrutura
+terraform destroy  # Destruir tudo
 
 # Gerenciamento do cluster
-make check         # Verificar status
-make ssh-master    # SSH no master
-make get-kubeconfig # Baixar kubeconfig
+./scripts/check-cluster.sh   # Verificar status
+ssh -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_MASTER>  # SSH no master
+scp -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_MASTER>:/home/<VM_USER>/.kube/config ./kubeconfig  # Baixar kubeconfig
 
 # Ansible específico
-make ansible-setup # Instalar dependências
-make ansible-run   # Executar playbooks
+ansible-galaxy collection install -r ansible/requirements.yml  # Instalar dependências
+cd ansible && ansible-playbook -i inventory site.yml && cd ..  # Executar playbooks
 
 # Limpeza
-make clean         # Limpar temporários
+rm -f ansible/inventory ./kubeconfig .terraform.lock.hcl  # Limpar temporários
 ```
 
 ## 🎯 **Casos de Uso**
@@ -622,8 +622,8 @@ echo 'cluster_name = "k8s-prod"' >> terraform.tfvars
 
 ### � **Após Implantação Básica**
 
-1. **✅ Verificar Cluster**: `make validate`
-2. **📋 Configurar kubectl**: `make get-kubeconfig`
+1. **✅ Verificar Cluster**: `./scripts/validate-cluster.sh`
+2. **📋 Configurar kubectl**: `scp -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_MASTER>:/home/<VM_USER>/.kube/config ./kubeconfig`
 3. **🚀 Deploy primeira aplicação**: Via kubectl/Helm
 4. **📊 Habilitar monitoring**: Prometheus + Grafana
 5. **🔐 Configurar RBAC**: Usuários e permissões

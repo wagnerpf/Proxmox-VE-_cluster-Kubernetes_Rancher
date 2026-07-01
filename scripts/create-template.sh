@@ -209,7 +209,7 @@ esac
 echo ""
 echo "📋 Próximos passos:"
 echo "1. Configure terraform.tfvars com o nó onde está o template"
-echo "2. Execute: make init && make apply"
+echo "2. Execute: terraform init && terraform apply"
 echo "3. Aguarde a criação do cluster Kubernetes"
 echo ""
 echo "🔍 Para verificar templates criados:"

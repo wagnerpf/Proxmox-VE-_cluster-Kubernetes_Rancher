@@ -5,12 +5,7 @@
 ### 📜 **Scripts Criados**
 - `scripts/install-longhorn.sh` - Instalação automatizada do Longhorn
 - `scripts/test-longhorn.sh` - Teste completo de volumes persistentes
-
-### 🔧 **Comandos Makefile**
-- `make install-longhorn` - Instalar Longhorn storage
-- `make test-longhorn` - Testar funcionalidade
-- `make longhorn-ui` - Acessar interface web
-- `make longhorn-status` - Status detalhado
+- `scripts/longhorn-status.sh` - Status detalhado
 
 ### 📚 **Documentação**
 - `VOLUMES-PERSISTENTES.md` - Guia completo com exemplos práticos
@@ -20,19 +15,19 @@
 ### **1. Pós-instalação do cluster**
 ```bash
 # Após cluster estar funcionando
-make validate
+./scripts/validate-cluster.sh
 
 # Instalar Longhorn
-make install-longhorn
+./scripts/install-longhorn.sh
 
 # Testar instalação
-make test-longhorn
+./scripts/test-longhorn.sh
 ```
 
 ### **2. Acessar interface web**
 ```bash
 # Expor UI (porta 8080)
-make longhorn-ui
+kubectl port-forward -n longhorn-system svc/longhorn-frontend 8080:80
 
 # Abrir navegador: http://localhost:8080
 ```
@@ -40,10 +35,10 @@ make longhorn-ui
 ### **3. Verificar status**
 ```bash
 # Status completo do Longhorn
-make longhorn-status
+./scripts/longhorn-status.sh
 
 # Status geral do cluster
-make status
+terraform show
 ```
 
 ## 💾 **Exemplo de Uso Prático**
@@ -117,7 +112,7 @@ kubectl get nodes.longhorn.io -n longhorn-system
 ### **Longhorn não instala**
 ```bash
 # Verificar cluster
-make validate
+./scripts/validate-cluster.sh
 
 # Verificar nós prontos
 kubectl get nodes

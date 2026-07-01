@@ -1,5 +1,14 @@
 # 📋 Changelog - Infraestrutura Kubernetes
 
+## [2026-07-01] - 🗑️ Remoção do Makefile e scripts órfãos
+
+- **Premissa do projeto**: usar apenas Terraform e Ansible como ferramentas de provisionamento/configuração, sem camada de orquestração adicional.
+- **Makefile removido**: todos os comandos `make X` documentados foram substituídos pelos comandos diretos equivalentes (`terraform`, `ansible-playbook`, `kubectl`, scripts em `scripts/`).
+- **Novo `scripts/clean-ssh-keys.sh`**: preserva a lógica que antes vivia no target `make clean-ssh-keys` (limpa `known_hosts` a partir dos IPs em `ansible/inventory`).
+- **Novo `scripts/longhorn-status.sh`**: preserva a lógica que antes vivia no target `make longhorn-status`.
+- **Scripts órfãos removidos** (não eram chamados por nada e duplicavam as roles Ansible): `install-kubernetes.sh`, `setup-master.sh`, `setup-worker.sh`, `get-join-command.sh`, `test-proxmox.sh` (vazio).
+- Documentação (`README.md`, `OVERVIEW.md`, `CLUSTER-QUICK-GUIDE.md`, `DOCUMENTATION-INDEX.md`, `LONGHORN-INSTALL-OPTIONS.md`, `LONGHORN-INTEGRATION.md`, `VOLUMES-PERSISTENTES.md`) atualizada para refletir os comandos diretos.
+
 ## [2026-07-01] - 🗑️ Remoção do Rancher
 
 - **Role Ansible `rancher` removida**: instalação de Helm, cert-manager e Rancher não faz mais parte do playbook (`ansible/site.yml`).

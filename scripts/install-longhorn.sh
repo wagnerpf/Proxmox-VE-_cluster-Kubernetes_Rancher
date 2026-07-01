@@ -45,7 +45,7 @@ check_prerequisites() {
         log_info "Certifique-se de que:"
         log_info "  1. O cluster está rodando"
         log_info "  2. O kubeconfig está configurado"
-        log_info "  3. Execute 'make validate' para verificar o cluster"
+        log_info "  3. Execute './scripts/validate-cluster.sh' para verificar o cluster"
         exit 1
     fi
     
@@ -329,12 +329,12 @@ main() {
         
         echo
         log_success "🎉 Longhorn instalado com sucesso!"
-        log_info "Execute 'make test-longhorn' para testar a instalação"
+        log_info "Execute './scripts/test-longhorn.sh' para testar a instalação"
     else
         echo
         log_warning "Instalação pode estar incompleta"
         log_info "Execute 'kubectl get pods -n longhorn-system' para verificar"
-        log_info "Execute 'make test-longhorn' para testar quando estiver pronto"
+        log_info "Execute './scripts/test-longhorn.sh' para testar quando estiver pronto"
     fi
 }
 

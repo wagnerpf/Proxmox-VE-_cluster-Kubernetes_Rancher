@@ -6,37 +6,34 @@ Este guia mostra como usar volumes persistentes no seu cluster Kubernetes usando
 
 ## 🔧 **Instalação**
 
-### **Método 1: Via Makefile (Recomendado)**
+### **Método 1: Via Script (Recomendado)**
 ```bash
 # Instalar Longhorn
-make install-longhorn
-
-# Testar instalação
-make test-longhorn
-
-# Verificar status
-make longhorn-status
-
-# Acessar interface web
-make longhorn-ui
-```
-
-### **Método 2: Script Manual**
-```bash
-# Executar script diretamente
 chmod +x scripts/install-longhorn.sh
 ./scripts/install-longhorn.sh
 
-# Testar
+# Testar instalação
 chmod +x scripts/test-longhorn.sh
 ./scripts/test-longhorn.sh
+
+# Verificar status
+chmod +x scripts/longhorn-status.sh
+./scripts/longhorn-status.sh
+
+# Acessar interface web
+kubectl port-forward -n longhorn-system svc/longhorn-frontend 8080:80
+```
+
+### **Método 2: Via Ansible**
+```bash
+cd ansible && ansible-playbook -i inventory longhorn-install.yml
 ```
 
 ## 📊 **Verificação da Instalação**
 
 ```bash
 # Status completo
-make longhorn-status
+./scripts/longhorn-status.sh
 
 # Verificar storage classes
 kubectl get storageclass
@@ -52,7 +49,7 @@ kubectl get volumes.longhorn.io -n longhorn-system
 
 ```bash
 # Expor interface temporariamente
-make longhorn-ui
+kubectl port-forward -n longhorn-system svc/longhorn-frontend 8080:80
 
 # Acesse: http://localhost:8080
 ```
@@ -305,7 +302,7 @@ kubectl get nodes.longhorn.io -n longhorn-system
 kubectl logs -n longhorn-system deployment/longhorn-manager
 
 # Status detalhado
-make longhorn-status
+./scripts/longhorn-status.sh
 
 # Verificar nós prontos
 kubectl get nodes.longhorn.io -n longhorn-system -o wide
@@ -317,7 +314,7 @@ kubectl get events -n longhorn-system
 ## 📸 **Snapshots e Backups**
 
 ### **Criar Snapshot Via UI**
-1. Acesse: `make longhorn-ui`
+1. Acesse: `kubectl port-forward -n longhorn-system svc/longhorn-frontend 8080:80`
 2. Navegue: **Volume** → Selecionar volume → **Take Snapshot**
 3. Configure: Nome e labels do snapshot
 
@@ -447,9 +444,9 @@ subjects:
 
 ## 🎯 **Próximos Passos**
 
-1. **Instale o Longhorn**: `make install-longhorn`
-2. **Teste básico**: `make test-longhorn`
-3. **Explore a UI**: `make longhorn-ui`
+1. **Instale o Longhorn**: `./scripts/install-longhorn.sh`
+2. **Teste básico**: `./scripts/test-longhorn.sh`
+3. **Explore a UI**: `kubectl port-forward -n longhorn-system svc/longhorn-frontend 8080:80`
 4. **Deploy uma aplicação** com volume persistente
 5. **Configure backups** automáticos
 6. **Monitore performance** via interface web

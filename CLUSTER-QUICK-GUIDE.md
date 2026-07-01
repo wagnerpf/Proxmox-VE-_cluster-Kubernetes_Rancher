@@ -12,7 +12,8 @@ ssh-keygen -t rsa -b 4096 -f ~/.ssh/k8s-cluster-key
 cp terraform.tfvars.example terraform.tfvars && nano terraform.tfvars
 
 # 3️⃣ Instalação completa
-make install
+terraform init && terraform apply
+cd ansible && ansible-playbook -i inventory site.yml && cd ..
 ```
 
 **⏱️ Tempo total:** 15-20 minutos
@@ -71,26 +72,31 @@ vm_user            = "<VM_USER>"
 
 ### 🏃‍♂️ **Método Ultra-Rápido**
 ```bash
-# Clone + Setup + Deploy em uma linha
-git clone <repo> && cd terraform-proxmox-k8s && make install
+# Clone + Setup + Deploy
+git clone <repo> && cd terraform-proxmox-k8s
+terraform init && terraform apply
+cd ansible && ansible-playbook -i inventory site.yml && cd ..
 ```
 
 ### 🎛️ **Método com Controle**
 ```bash
 # 1. Preparar ambiente
-make prerequisites
+chmod +x scripts/install-prerequisites.sh && ./scripts/install-prerequisites.sh
 
 # 2. Inicializar Terraform  
-make init
+terraform init
 
 # 3. Revisar plano (opcional)
-make plan
+terraform plan
 
 # 4. Aplicar infraestrutura
-make apply
+terraform apply
 
-# 5. Verificar resultado
-make validate
+# 5. Configurar cluster via Ansible
+cd ansible && ansible-playbook -i inventory site.yml && cd ..
+
+# 6. Verificar resultado
+./scripts/validate-cluster.sh
 ```
 
 ---
@@ -123,10 +129,10 @@ make validate
 ### 🔍 **Comandos de Verificação**
 ```bash
 # Status geral
-make validate
+./scripts/validate-cluster.sh
 
 # Conectividade SSH
-make ping  
+cd ansible && ansible all -i inventory -m ping && cd ..
 
 # Cluster Kubernetes
 kubectl --kubeconfig=./kubeconfig get nodes
@@ -150,22 +156,22 @@ k8s-cluster-exemplo-worker-2   Ready    <none>          4m    v1.28.2
 
 ### 📊 **Monitoramento**
 ```bash
-make status          # Status completo da infraestrutura
-make logs           # Logs de deployment  
-make check          # Verificação rápida
+terraform show                  # Status completo da infraestrutura
+kubectl --kubeconfig=./kubeconfig get pods -A  # Logs/estado do deployment
+./scripts/check-cluster.sh      # Verificação rápida
 ```
 
 ### 🔧 **Acesso e Configuração**
 ```bash
-make ssh-master     # SSH no master node
-make get-kubeconfig # Baixar kubeconfig
+ssh -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_MASTER>   # SSH no master node
+scp -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_MASTER>:/home/<VM_USER>/.kube/config ./kubeconfig  # Baixar kubeconfig
 ```
 
 ### 🧹 **Manutenção**
 ```bash
-make clean-ssh-keys # Limpar known_hosts (VMs recriadas)
-make destroy        # Destruir toda infraestrutura
-make clean          # Limpar arquivos temporários
+./scripts/clean-ssh-keys.sh   # Limpar known_hosts (VMs recriadas)
+terraform destroy             # Destruir toda infraestrutura
+rm -f ansible/inventory ./kubeconfig .terraform.lock.hcl  # Limpar arquivos temporários
 ```
 
 ---
@@ -195,7 +201,7 @@ ssh root@gardenia "qm status <VMID>"
 #### **"SSH não conecta"**
 ```bash
 # Limpar known_hosts
-make clean-ssh-keys
+./scripts/clean-ssh-keys.sh
 
 # Verificar chave SSH
 ssh-add ~/.ssh/k8s-cluster-key
@@ -213,13 +219,16 @@ cd ansible && ansible-playbook -i inventory site.yml
 ### 🚑 **Comandos de Emergência**
 ```bash
 # Reiniciar tudo
-make destroy && make install
+terraform destroy
+terraform apply
+cd ansible && ansible-playbook -i inventory site.yml && cd ..
 
 # Reconfigurar apenas (sem destruir VMs)
 cd ansible && ansible-playbook -i inventory site.yml
 
 # Debug completo
-make status && make logs
+terraform show
+kubectl --kubeconfig=./kubeconfig get pods -A
 ```
 
 ---
@@ -250,7 +259,8 @@ export TF_VAR_proxmox_api_token_secret="token-from-ci"
 export TF_VAR_cluster_name="k8s-ci-$(date +%Y%m%d)"
 
 # Deploy automatizado
-make install
+terraform init && terraform apply
+cd ansible && ansible-playbook -i inventory site.yml && cd ..
 ```
 
 ---
@@ -258,7 +268,7 @@ make install
 ## 🎉 **Próximos Passos**
 
 ### 🚀 **Após Instalação**
-1. **Deploy primeira app**: `make deploy` (exemplo via `scripts/deploy-example.sh`)
+1. **Deploy primeira app**: `./scripts/deploy-example.sh`
 2. **Configure monitoring**: Prometheus + Grafana
 3. **Setup backup**: Longhorn ou external
 4. **Implemente CI/CD**: GitLab/Jenkins integration
@@ -293,24 +303,24 @@ make install
 
 ### **Gestão do Cluster**
 ```bash
-make status           # Status geral
-make logs            # Ver logs
-make validate        # Validar configuração
-make get-kubeconfig  # Baixar kubeconfig
+terraform show                                 # Status geral
+kubectl --kubeconfig=./kubeconfig get pods -A  # Ver logs/estado
+./scripts/validate-cluster.sh                  # Validar configuração
+scp -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_MASTER>:/home/<VM_USER>/.kube/config ./kubeconfig  # Baixar kubeconfig
 ```
 
 ### **Acesso SSH**
 ```bash
-make ssh-master      # Master node
-make ssh-worker-1    # Worker 1
-make ssh-worker-2    # Worker 2
+ssh -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_MASTER>     # Master node
+ssh -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_WORKER_1>   # Worker 1
+ssh -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_WORKER_2>   # Worker 2
 ```
 
 ### **Manutenção**
 ```bash
-make clean-ssh-keys  # Limpar known_hosts
-make destroy         # Destruir cluster
-make clean           # Limpar arquivos temp
+./scripts/clean-ssh-keys.sh   # Limpar known_hosts
+terraform destroy             # Destruir cluster
+rm -f ansible/inventory ./kubeconfig .terraform.lock.hcl  # Limpar arquivos temp
 ```
 
 ## 🔍 Verificações Rápidas
@@ -348,17 +358,17 @@ kubectl --kubeconfig=./ansible/kubeconfig get pods -A
 
 ```bash
 # 1. Criar template (escolha um método acima)
-make create-template
+./scripts/create-template.sh
 
 # 2. Configurar nó no terraform.tfvars
 proxmox_node = "your-node-here"
 
 # 3. Executar projeto
-make init
-make apply
+terraform init
+terraform apply
 
 # 4. Verificar cluster
-make validate
+./scripts/validate-cluster.sh
 ```
 
 ## 🔍 Verificações Úteis
@@ -411,7 +421,7 @@ Para clusters maiores, considere:
 ssh root@$PROXMOX_NODE "qm list | grep ubuntu-22.04-cloud"
 
 # Se não existe, criar:
-make create-template
+./scripts/create-template.sh
 ```
 
 ### **Nó não acessível:**
