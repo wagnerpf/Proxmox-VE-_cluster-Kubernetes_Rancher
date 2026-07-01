@@ -13,6 +13,9 @@ terraform.tfvars
 *.key
 *.crt
 
+# Inventário gerado pelo Terraform (contém IPs e usuário reais)
+ansible/inventory
+
 # OS
 .DS_Store
 Thumbs.db

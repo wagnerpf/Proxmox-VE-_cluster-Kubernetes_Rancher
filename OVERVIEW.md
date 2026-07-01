@@ -32,7 +32,7 @@ graph TB
         AN[Ansible]
     end
     
-    subgraph "🏢 Proxmox VE Cluster - CEFETES"
+    subgraph "🏢 Proxmox VE Cluster - Instituição"
         PVE[cacto.cefetes.br:8006<br/>Node: gardenia]
         
         subgraph "🐧 Ubuntu 22.04 Template"
@@ -41,15 +41,15 @@ graph TB
         
         subgraph "☸️ Kubernetes Cluster"
             direction TB
-            M1[🎯 Master Node<br/>172.17.176.34<br/>4 vCPU, 8GB RAM, 80GB]
-            W1[⚡ Worker Node 1<br/>172.17.176.35<br/>4 vCPU, 16GB RAM, 50GB]
-            W2[⚡ Worker Node 2<br/>172.17.176.36<br/>4 vCPU, 16GB RAM, 50GB]
+            M1[🎯 Master Node<br/><IP_MASTER><br/>4 vCPU, 8GB RAM, 80GB]
+            W1[⚡ Worker Node 1<br/><IP_WORKER_1><br/>4 vCPU, 16GB RAM, 50GB]
+            W2[⚡ Worker Node 2<br/><IP_WORKER_2><br/>4 vCPU, 16GB RAM, 50GB]
         end
         
         subgraph "🌐 Serviços de Rede"
             direction LR
-            GW[Gateway: 172.17.176.1]
-            DNS[DNS: 172.17.176.1, 8.8.4.4]
+            GW[Gateway: <GATEWAY_IP>]
+            DNS[DNS: <GATEWAY_IP>, 8.8.4.4]
             BR[Bridge: vmbr0]
         end
     end
@@ -111,17 +111,17 @@ graph TB
 
 | Componente | Especificação | Valor | Observações |
 |------------|---------------|--------|-------------|
-| **Master Node** | IP fixo | `172.17.176.34` | Control plane + Rancher |
+| **Master Node** | IP fixo | `<IP_MASTER>` | Control plane + Rancher |
 |  | vCPU | 4 cores | Mínimo para control plane |
 |  | RAM | 8GB | Recomendado para Rancher |
 |  | Disco | 80GB | Sistema + etcd + containers |
 |  | Função | Control plane | API server, scheduler, etcd |
-| **Worker Node 1** | IP fixo | `172.17.176.35` | Cargas de trabalho |
+| **Worker Node 1** | IP fixo | `<IP_WORKER_1>` | Cargas de trabalho |
 |  | vCPU | 4 cores | Balanceamento de carga |
 |  | RAM | 16GB | Otimizado para workloads |
 |  | Disco | 50GB | Containers e volumes |
 |  | Função | Worker | Executar pods de aplicação |
-| **Worker Node 2** | IP fixo | `172.17.176.36` | Cargas de trabalho |
+| **Worker Node 2** | IP fixo | `<IP_WORKER_2>` | Cargas de trabalho |
 |  | vCPU | 4 cores | Redundância |
 |  | RAM | 16GB | Otimizado para workloads |
 |  | Disco | 50GB | Containers e volumes |
@@ -131,9 +131,9 @@ graph TB
 
 | Parâmetro | Valor | Descrição |
 |-----------|--------|-----------|
-| **Subnet** | `172.17.176.0/20` | Rede institucional CEFETES |
-| **Gateway** | `172.17.176.1` | Gateway padrão |
-| **DNS Primary** | `172.17.176.1` | DNS institucional |
+| **Subnet** | `<SUBNET>` | Rede institucional Instituição |
+| **Gateway** | `<GATEWAY_IP>` | Gateway padrão |
+| **DNS Primary** | `<GATEWAY_IP>` | DNS institucional |
 | **DNS Secondary** | `8.8.4.4` | DNS público Google |
 | **Search Domain** | `cefetes.br` | Domínio de busca |
 | **Bridge** | `vmbr0` | Bridge de rede Proxmox |
@@ -143,7 +143,7 @@ graph TB
 #### **Tags Comuns (Todos os Recursos)**
 ```yaml
 environment: "production"           # Ambiente de execução
-project: "k8s-cluster-viana"       # Nome do projeto
+project: "k8s-cluster-exemplo"       # Nome do projeto
 managed-by: "terraform"            # Ferramenta de gestão
 ```
 
@@ -166,7 +166,7 @@ node-type: "worker"
 |---------|---------------|-----------|
 | **Autenticação** | SSH Keys exclusivo | Sem senhas, mais seguro |
 | **Chave SSH** | `~/.ssh/k8s-cluster-key` | Dedicada ao cluster |
-| **Usuário VM** | `admviana` | Usuário administrativo |
+| **Usuário VM** | `<VM_USER>` | Usuário administrativo |
 | **Firewall** | Regras Proxmox + iptables | Controle de tráfego |
 | **Certificados** | cert-manager + Let's Encrypt | TLS automático |
 | **RBAC** | Kubernetes nativo | Controle de acesso granular |
@@ -178,7 +178,7 @@ node-type: "worker"
 | **vCPUs** | 12 cores | 4 (master) + 4 (worker1) + 4 (worker2) |
 | **RAM** | 40GB | 8GB (master) + 16GB (worker1) + 16GB (worker2) |
 | **Storage** | 180GB | 80GB (master) + 50GB (worker1) + 50GB (worker2) |
-| **IPs** | 3 fixos | Faixa 172.17.176.34-36 |
+| **IPs** | 3 fixos | Faixa <IP_MASTER>-36 |
 
 ## 🚀 **Fluxo de Implantação**
 
@@ -646,7 +646,7 @@ echo 'cluster_name = "k8s-prod"' >> terraform.tfvars
 ### � **Após Implantação Básica**
 
 1. **✅ Verificar Cluster**: `make validate`
-2. **🌐 Acessar Rancher**: `https://172.17.176.34:8443`
+2. **🌐 Acessar Rancher**: `https://<IP_MASTER>:8443`
 3. **📋 Configurar kubectl**: `make get-kubeconfig`
 4. **🚀 Deploy primeira aplicação**: Via Rancher Apps
 5. **📊 Habilitar monitoring**: Prometheus + Grafana

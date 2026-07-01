@@ -38,6 +38,8 @@
     kubectl wait --for=condition=available --timeout=300s deployment/cert-manager -n cert-manager
     kubectl wait --for=condition=available --timeout=300s deployment/cert-manager-webhook -n cert-manager
   become_user: "{{ ansible_user }}"
+  register: wait_cert_manager
+  until: wait_cert_manager.rc == 0
   retries: 3
   delay: 30
 
@@ -63,6 +65,8 @@
     export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
     kubectl wait --for=condition=ready pod -l app=rancher -n cattle-system --timeout=600s
   become_user: "{{ ansible_user }}"
+  register: wait_rancher
+  until: wait_rancher.rc == 0
   retries: 5
   delay: 60
 

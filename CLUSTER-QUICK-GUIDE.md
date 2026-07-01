@@ -15,7 +15,7 @@ cp terraform.tfvars.example terraform.tfvars && nano terraform.tfvars
 make install
 
 # 4️⃣ Acessar Rancher
-open https://172.17.176.34:8443  # admin / admin123
+open https://<IP_MASTER>:8443  # admin / admin123
 ```
 
 **⏱️ Tempo total:** 15-20 minutos
@@ -56,16 +56,16 @@ proxmox_api_token_secret = "SEU_TOKEN_AQUI"
 proxmox_node             = "gardenia"
 
 # === CLUSTER CONFIG ===
-cluster_name = "k8s-cluster-viana"
+cluster_name = "k8s-cluster-exemplo"
 environment  = "production"
 
-# === NETWORK (CEFETES) ===
-master_ips = ["172.17.176.34"]
-worker_ips = ["172.17.176.35", "172.17.176.36"]
+# === NETWORK (Instituição) ===
+master_ips = ["<IP_MASTER>"]
+worker_ips = ["<IP_WORKER_1>", "<IP_WORKER_2>"]
 
 # === SSH SECURITY ===
 ssh_public_key_path = "~/.ssh/k8s-cluster-key.pub"
-vm_user            = "admviana"
+vm_user            = "<VM_USER>"
 ```
 
 ---
@@ -103,9 +103,9 @@ make validate
 ### 🖥️ **Infraestrutura Criada**
 ```
 ✅ 3 VMs Ubuntu 22.04 no Proxmox
-   ├── k8s-cluster-viana-master-1  (172.17.176.34)
-   ├── k8s-cluster-viana-worker-1  (172.17.176.35)  
-   └── k8s-cluster-viana-worker-2  (172.17.176.36)
+   ├── k8s-cluster-exemplo-master-1  (<IP_MASTER>)
+   ├── k8s-cluster-exemplo-worker-1  (<IP_WORKER_1>)  
+   └── k8s-cluster-exemplo-worker-2  (<IP_WORKER_2>)
 
 ✅ Cluster Kubernetes v1.28.2
    ├── Control plane configurado
@@ -113,7 +113,7 @@ make validate
    └── Flannel CNI funcionando
 
 ✅ Rancher v2.7.5+ instalado
-   ├── Interface web: https://172.17.176.34:8443
+   ├── Interface web: https://<IP_MASTER>:8443
    ├── Credenciais: admin / admin123
    └── cert-manager para certificados
 ```
@@ -121,9 +121,9 @@ make validate
 ### 🔗 **Pontos de Acesso**
 | Serviço | URL | Credenciais |
 |---------|-----|-------------|
-| **Rancher UI** | `https://172.17.176.34:8443` | `admin` / `admin123` |
-| **Kubernetes API** | `https://172.17.176.34:6443` | Via kubeconfig |
-| **SSH Master** | `ssh admviana@172.17.176.34` | Chave SSH |
+| **Rancher UI** | `https://<IP_MASTER>:8443` | `admin` / `admin123` |
+| **Kubernetes API** | `https://<IP_MASTER>:6443` | Via kubeconfig |
+| **SSH Master** | `ssh <VM_USER>@<IP_MASTER>` | Chave SSH |
 
 ---
 
@@ -151,9 +151,9 @@ kubectl --kubeconfig=./kubeconfig get pods -n cattle-system
 ```bash
 $ kubectl get nodes
 NAME                         STATUS   ROLES           AGE   VERSION
-k8s-cluster-viana-master-1   Ready    control-plane   5m    v1.28.2
-k8s-cluster-viana-worker-1   Ready    <none>          4m    v1.28.2  
-k8s-cluster-viana-worker-2   Ready    <none>          4m    v1.28.2
+k8s-cluster-exemplo-master-1   Ready    control-plane   5m    v1.28.2
+k8s-cluster-exemplo-worker-1   Ready    <none>          4m    v1.28.2  
+k8s-cluster-exemplo-worker-2   Ready    <none>          4m    v1.28.2
 
 $ kubectl get pods -n cattle-system
 NAME                       READY   STATUS    RESTARTS   AGE
@@ -223,7 +223,7 @@ ssh-add ~/.ssh/k8s-cluster-key
 #### **"Cluster não forma"**
 ```bash
 # Logs do kubelet
-ssh -i ~/.ssh/k8s-cluster-key admviana@172.17.176.34 "sudo journalctl -u kubelet -f"
+ssh -i ~/.ssh/k8s-cluster-key <VM_USER>@<IP_MASTER> "sudo journalctl -u kubelet -f"
 
 # Reexecutar Ansible se necessário
 cd ansible && ansible-playbook -i inventory site.yml

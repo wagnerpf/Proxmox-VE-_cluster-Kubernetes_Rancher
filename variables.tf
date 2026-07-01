@@ -189,7 +189,7 @@ variable "storage_pool" {
 variable "vm_user" {
   description = "Usuário para as VMs"
   type        = string
-  default     = "admviana"
+  default     = "ubuntu"
 }
 
 variable "vm_password" {

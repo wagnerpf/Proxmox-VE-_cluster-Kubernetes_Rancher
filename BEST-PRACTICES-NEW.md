@@ -44,7 +44,7 @@ master ansible_host=192.168.1.10 ansible_user=ubuntu ansible_password=insecure12
 ```yaml
 # ansible/inventory (versão atual)
 [masters]  
-k8s-cluster-viana-master-1 ansible_host=172.17.176.34 ansible_user=admviana ansible_ssh_private_key_file=~/.ssh/k8s-cluster-key
+k8s-cluster-exemplo-master-1 ansible_host=<IP_MASTER> ansible_user=<VM_USER> ansible_ssh_private_key_file=~/.ssh/k8s-cluster-key
 ```
 
 #### **Benefícios de Segurança:**
@@ -121,7 +121,7 @@ variable "ssh_public_key_path" {
 locals {
   common_tags = [
     "environment=${var.environment}",     # production|staging|development
-    "project=${var.cluster_name}",        # k8s-cluster-viana
+    "project=${var.cluster_name}",        # k8s-cluster-exemplo
     "managed-by=terraform"                # Identificação de gestão
   ]
 }
@@ -152,7 +152,7 @@ tags = join(";", concat(local.common_tags, [
 pvesh get /cluster/resources | jq '.[] | select(.tags | contains("environment=production"))'
 
 # Recursos por projeto
-pvesh get /cluster/resources | jq '.[] | select(.tags | contains("project=k8s-cluster-viana"))'
+pvesh get /cluster/resources | jq '.[] | select(.tags | contains("project=k8s-cluster-exemplo"))'
 
 # Recursos gerenciados pelo Terraform
 pvesh get /cluster/resources | jq '.[] | select(.tags | contains("managed-by=terraform"))'
@@ -332,7 +332,7 @@ ssh-keygen -l -f ~/.ssh/k8s-cluster-key.pub && echo "✅ SSH key válida"
 terraform {
   backend "s3" {
     bucket         = "terraform-state-k8s"
-    key            = "clusters/k8s-cluster-viana/terraform.tfstate"
+    key            = "clusters/k8s-cluster-exemplo/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
     dynamodb_table = "terraform-locks"

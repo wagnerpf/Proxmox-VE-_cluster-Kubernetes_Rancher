@@ -62,5 +62,7 @@
     export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
     kubectl wait --for=condition=Ready pod --all -n kube-system --timeout=300s
   become_user: "{{ ansible_user }}"
+  register: wait_kube_system
+  until: wait_kube_system.rc == 0
   retries: 3
   delay: 30
