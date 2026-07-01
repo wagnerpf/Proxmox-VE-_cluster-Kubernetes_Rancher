@@ -1,4 +1,16 @@
 ---
+- name: "Firewall: permitir API server do Kubernetes"
+  community.general.ufw:
+    rule: allow
+    port: '6443'
+    proto: tcp
+
+- name: "Firewall: permitir etcd"
+  community.general.ufw:
+    rule: allow
+    port: '2379:2380'
+    proto: tcp
+
 - name: Verificar se cluster já existe
   stat:
     path: /etc/kubernetes/admin.conf
@@ -28,7 +40,7 @@
     dest: "/home/{{ ansible_user }}/.kube/config"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
-    mode: '0644'
+    mode: '0600'
     remote_src: yes
 
 - name: Aguardar API server ficar disponível
@@ -48,13 +60,15 @@
 - name: Gerar comando de join
   command: kubeadm token create --print-join-command
   register: join_command_raw
+  no_log: true
   when: not cluster_exists.stat.exists
 
 - name: Salvar comando de join
   copy:
     content: "{{ join_command_raw.stdout }}"
     dest: "/tmp/kubernetes-join-command"
-    mode: '0644'
+    mode: '0600'
+  no_log: true
   when: join_command_raw is defined
 
 - name: Aguardar pods do sistema ficarem prontos

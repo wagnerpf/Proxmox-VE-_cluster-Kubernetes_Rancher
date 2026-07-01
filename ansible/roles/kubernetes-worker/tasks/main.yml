@@ -1,4 +1,10 @@
 ---
+- name: "Firewall: permitir faixa de NodePort"
+  community.general.ufw:
+    rule: allow
+    port: '30000:32767'
+    proto: tcp
+
 - name: Obter comando de join do master
   slurp:
     src: "/tmp/kubernetes-join-command"

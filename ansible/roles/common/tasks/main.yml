@@ -53,3 +53,54 @@
 - name: Configurar timezone
   timezone:
     name: America/Sao_Paulo
+
+- name: "Hardening SSH: desabilitar autenticação por senha"
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?\s*PasswordAuthentication\s+.*'
+    replace: 'PasswordAuthentication no'
+  notify: restart sshd
+
+- name: "Hardening SSH: desabilitar login root"
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?\s*PermitRootLogin\s+.*'
+    replace: 'PermitRootLogin no'
+  notify: restart sshd
+
+- name: Instalar UFW
+  apt:
+    name: ufw
+    state: present
+
+- name: "Firewall: permitir SSH (antes de habilitar, evita lockout)"
+  community.general.ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+
+- name: "Firewall: permitir Flannel VXLAN (rede de pods entre nós)"
+  community.general.ufw:
+    rule: allow
+    port: '8472'
+    proto: udp
+
+- name: "Firewall: permitir Kubelet API (usado pelo API server e por kubectl exec/logs)"
+  community.general.ufw:
+    rule: allow
+    port: '10250'
+    proto: tcp
+
+- name: "Firewall: política padrão - negar entrada"
+  community.general.ufw:
+    direction: incoming
+    default: deny
+
+- name: "Firewall: política padrão - permitir saída"
+  community.general.ufw:
+    direction: outgoing
+    default: allow
+
+- name: "Firewall: habilitar UFW"
+  community.general.ufw:
+    state: enabled

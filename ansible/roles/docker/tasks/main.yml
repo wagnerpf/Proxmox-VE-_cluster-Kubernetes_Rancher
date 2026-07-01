@@ -1,13 +1,21 @@
 ---
-- name: Adicionar chave GPG do Docker
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
+- name: Criar diretório de keyrings do APT
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Baixar e instalar a chave GPG do Docker
+  ansible.builtin.shell: |
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  args:
+    creates: /etc/apt/keyrings/docker.gpg
 
 - name: Adicionar repositório Docker
   apt_repository:
-    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
     state: present
+    filename: docker
 
 - name: Instalar Docker
   apt:

@@ -3,7 +3,11 @@ terraform {
   required_version = ">= 1.0"
   required_providers {
     proxmox = {
-      source  = "telmate/proxmox"
+      source = "telmate/proxmox"
+      # Pinado a este release candidate de propósito: o schema de disco/cpu/rede
+      # usado abaixo (blocos `cpu {}`, `disk { slot = "scsiN" }`, `network { id = 0 }`)
+      # só existe na série 3.0.x. Não há release estável (2.9.x é a última) com
+      # esse schema - baixar a versão quebra `terraform validate`.
       version = "3.0.1-rc9"
     }
     local = {

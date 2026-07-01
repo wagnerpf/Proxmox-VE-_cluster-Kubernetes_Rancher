@@ -24,7 +24,7 @@ cd ansible && ansible-playbook -i inventory site.yml && cd ..
 
 ### ✅ **Checklist Básico**
 - [ ] **Proxmox VE** 7.0+ funcionando
-- [ ] **Template Ubuntu 22.04** criado no nó "gardenia"  
+- [ ] **Template Ubuntu 22.04** criado no nó "seu-node"  
 - [ ] **Token API** do Proxmox configurado
 - [ ] **Terraform + Ansible** instalados na estação
 - [ ] **Chaves SSH** geradas e configuradas
@@ -37,7 +37,7 @@ ansible --version  # >= 2.12
 python3 --version  # >= 3.8
 
 # Testar conectividade Proxmox
-curl -k https://cacto.cefetes.br:8006/api2/json/version
+curl -k https://seu-proxmox.dominio.br:8006/api2/json/version
 ```
 
 ---
@@ -48,10 +48,10 @@ curl -k https://cacto.cefetes.br:8006/api2/json/version
 
 ```hcl
 # === PROXMOX CONNECTION ===
-proxmox_api_url          = "https://cacto.cefetes.br:8006/api2/json"
+proxmox_api_url          = "https://seu-proxmox.dominio.br:8006/api2/json"
 proxmox_api_token_id     = "root@pam!terraform"  
 proxmox_api_token_secret = "SEU_TOKEN_AQUI"
-proxmox_node             = "gardenia"
+proxmox_node             = "seu-node"
 
 # === CLUSTER CONFIG ===
 cluster_name = "k8s-cluster-exemplo"
@@ -183,7 +183,7 @@ rm -f ansible/inventory ./kubeconfig .terraform.lock.hcl  # Limpar arquivos temp
 #### **"Template não encontrado"**
 ```bash
 # Verificar se template existe no nó correto
-ssh root@gardenia "qm list | grep ubuntu-22.04-cloud"
+ssh root@seu-node "qm list | grep ubuntu-22.04-cloud"
 
 # Se não existe, criar:
 ./scripts/create-template.sh
@@ -192,10 +192,10 @@ ssh root@gardenia "qm list | grep ubuntu-22.04-cloud"
 #### **"VMs não inicializam"**  
 ```bash
 # Verificar recursos no Proxmox
-pvesh get /nodes/gardenia/status
+pvesh get /nodes/seu-node/status
 
 # Verificar logs
-ssh root@gardenia "qm status <VMID>"
+ssh root@seu-node "qm status <VMID>"
 ```
 
 #### **"SSH não conecta"**
@@ -287,7 +287,7 @@ cd ansible && ansible-playbook -i inventory site.yml && cd ..
 
 🚀 **Deploy** → 🔧 **Configure** → 🎯 **Use**
 
-[![Powered by CEFET-ES](https://img.shields.io/badge/Powered%20by-CEFET--ES-blue)](https://cefetes.br)
+[![Terraform + Ansible](https://img.shields.io/badge/Powered%20by-Terraform%20%2B%20Ansible-blue)](https://terraform.io)
 
 </div>
 

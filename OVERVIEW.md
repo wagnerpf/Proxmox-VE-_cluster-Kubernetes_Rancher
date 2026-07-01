@@ -33,7 +33,7 @@ graph TB
     end
     
     subgraph "🏢 Proxmox VE Cluster - Instituição"
-        PVE[cacto.cefetes.br:8006<br/>Node: gardenia]
+        PVE[seu-proxmox.dominio.br:8006<br/>Node: seu-node]
         
         subgraph "🐧 Ubuntu 22.04 Template"
             TPL[ubuntu-22.04-cloud<br/>Template base]
@@ -128,7 +128,7 @@ graph TB
 | **Gateway** | `<GATEWAY_IP>` | Gateway padrão |
 | **DNS Primary** | `<GATEWAY_IP>` | DNS institucional |
 | **DNS Secondary** | `8.8.4.4` | DNS público Google |
-| **Search Domain** | `cefetes.br` | Domínio de busca |
+| **Search Domain** | `<SEARCH_DOMAIN>` | Domínio de busca |
 | **Bridge** | `vmbr0` | Bridge de rede Proxmox |
 
 ### 🏷️ **Sistema de Tags**
@@ -684,7 +684,7 @@ Um **cluster Kubernetes de produção** funcionando em menos de 20 minutos, com 
 
 **🚀 Transforme sua infraestrutura com Kubernetes moderno!**
 
-[![Feito com ❤️ no CEFET-ES](https://img.shields.io/badge/Feito%20com%20❤️%20no-CEFET--ES-blue)](https://cefetes.br)
+[![Feito com ❤️ e Infraestrutura como Código](https://img.shields.io/badge/Feito%20com%20❤️%20e-IaC-blue)](https://terraform.io)
 
 *Infraestrutura como Código • Kubernetes • Proxmox VE*
 

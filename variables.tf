@@ -21,9 +21,9 @@ variable "proxmox_api_token_secret" {
 }
 
 variable "proxmox_tls_insecure" {
-  description = "Ignorar certificados TLS inválidos"
+  description = "Ignorar certificados TLS inválidos (desative apenas se o Proxmox usar certificado autoassinado sem CA confiável)"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "proxmox_node" {
@@ -193,10 +193,9 @@ variable "vm_user" {
 }
 
 variable "vm_password" {
-  description = "Senha para as VMs"
+  description = "Senha de backup para as VMs (defina em terraform.tfvars - SSH keys é o método de acesso primário)"
   type        = string
   sensitive   = true
-  default     = "abc@123"
 }
 
 # ========================================
