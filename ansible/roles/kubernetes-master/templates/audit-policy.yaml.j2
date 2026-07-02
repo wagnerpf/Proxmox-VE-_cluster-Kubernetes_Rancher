@@ -1,0 +1,12 @@
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+  # Secrets e ConfigMaps: registrar corpo completo da requisição e resposta
+  - level: RequestResponse
+    resources:
+      - group: ""
+        resources: ["secrets", "configmaps"]
+  # Demais recursos: registrar apenas metadados (quem, quando, o quê), sem payload
+  - level: Metadata
+    omitStages:
+      - RequestReceived

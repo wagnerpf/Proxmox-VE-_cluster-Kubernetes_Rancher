@@ -6,7 +6,8 @@ service_cidr: "10.96.0.0/12"
 
 # Configurações do Kubernetes
 kubernetes_version: "1.28.2"
-kubernetes_cni: "flannel"
+kubernetes_cni: "canal"  # Flannel para rede de pods, Calico (Felix) para enforcement de NetworkPolicy
+canal_version: "v3.28.3"  # última versão testada contra Kubernetes 1.27-1.30
 
 # Configurações do Docker
 docker_version: "24.0.5"

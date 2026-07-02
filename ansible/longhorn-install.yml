@@ -12,6 +12,13 @@
     longhorn_validate_installation: true
   
   pre_tasks:
+    - name: "Instalar dependência Python para os módulos kubernetes.core"
+      apt:
+        name: python3-kubernetes
+        state: present
+        update_cache: yes
+      become: yes
+
     - name: "Verificar conectividade com cluster"
       kubernetes.core.k8s_info:
         api_version: v1

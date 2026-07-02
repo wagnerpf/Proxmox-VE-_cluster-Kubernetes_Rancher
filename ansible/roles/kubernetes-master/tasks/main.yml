@@ -16,13 +16,46 @@
     path: /etc/kubernetes/admin.conf
   register: cluster_exists
 
+- name: "CIS: criar diretórios para audit log e chave de criptografia de Secrets"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0700'
+  loop:
+    - /etc/kubernetes/enc
+    - /var/log/kubernetes
+  when: not cluster_exists.stat.exists
+
+- name: "CIS: gerar audit policy do kube-apiserver"
+  template:
+    src: audit-policy.yaml.j2
+    dest: /etc/kubernetes/audit-policy.yaml
+    mode: '0600'
+  when: not cluster_exists.stat.exists
+
+- name: "CIS: gerar chave de criptografia de Secrets no etcd"
+  command: openssl rand -base64 32
+  register: etcd_encryption_key
+  no_log: true
+  when: not cluster_exists.stat.exists
+
+- name: "CIS: gerar EncryptionConfiguration para o kube-apiserver"
+  template:
+    src: encryption-config.yaml.j2
+    dest: /etc/kubernetes/enc/encryption-config.yaml
+    mode: '0600'
+  no_log: true
+  when: not cluster_exists.stat.exists
+
+- name: Gerar arquivo de configuração do kubeadm
+  template:
+    src: kubeadm-config.yaml.j2
+    dest: /etc/kubernetes/kubeadm-config.yaml
+    mode: '0600'
+  when: not cluster_exists.stat.exists
+
 - name: Inicializar cluster Kubernetes
-  command: >
-    kubeadm init
-    --apiserver-advertise-address={{ apiserver_advertise_address }}
-    --pod-network-cidr={{ pod_network_cidr }}
-    --service-cidr={{ service_cidr }}
-    --cri-socket=unix:///var/run/containerd/containerd.sock
+  command: kubeadm init --config=/etc/kubernetes/kubeadm-config.yaml
   when: not cluster_exists.stat.exists
   register: kubeadm_init
 
@@ -50,18 +83,42 @@
     delay: 10
     timeout: 300
 
-- name: Instalar Flannel CNI via kubectl
+- name: "CIS 5.3.x: instalar Canal (Flannel para rede, Calico/Felix para enforcement de NetworkPolicy)"
   shell: |
     export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
-    kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+    kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/{{ canal_version }}/manifests/canal.yaml
   become_user: "{{ ansible_user }}"
-  when: not cluster_exists.stat.exists
+
+- name: "CIS: garantir seccompDefault habilitado no kubelet (master)"
+  lineinfile:
+    path: /var/lib/kubelet/config.yaml
+    regexp: '^seccompDefault:'
+    line: 'seccompDefault: true'
+  register: kubelet_seccomp_master
+
+- name: Reiniciar kubelet após ajuste de seccompDefault (master)
+  systemd:
+    name: kubelet
+    state: restarted
+  when: kubelet_seccomp_master is changed
+
+- name: "CIS 4.2.1/4.2.3: ler configuração atual do kubelet (master)"
+  slurp:
+    src: /var/lib/kubelet/config.yaml
+  register: kubelet_config_raw_master
+
+- name: "CIS 4.2.1/4.2.3: validar anonymous-auth desabilitado e authorization Webhook (master)"
+  assert:
+    that:
+      - (kubelet_config_raw_master.content | b64decode | from_yaml).authentication.anonymous.enabled == false
+      - (kubelet_config_raw_master.content | b64decode | from_yaml).authorization.mode == "Webhook"
+    fail_msg: "kubelet sem anonymous-auth desabilitado e/ou authorization.mode=Webhook (CIS 4.2.1/4.2.3)"
+    success_msg: "kubelet em conformidade com CIS 4.2.1 e 4.2.3"
 
 - name: Gerar comando de join
   command: kubeadm token create --print-join-command
   register: join_command_raw
   no_log: true
-  when: not cluster_exists.stat.exists
 
 - name: Salvar comando de join
   copy:
@@ -80,3 +137,14 @@
   until: wait_kube_system.rc == 0
   retries: 3
   delay: 30
+
+- name: "CIS 5.7.x: aplicar Pod Security Standards no namespace default"
+  shell: |
+    export KUBECONFIG=/home/{{ ansible_user }}/.kube/config
+    kubectl label namespace default \
+      pod-security.kubernetes.io/enforce=baseline \
+      pod-security.kubernetes.io/audit=restricted \
+      pod-security.kubernetes.io/warn=restricted \
+      --overwrite
+  become_user: "{{ ansible_user }}"
+  changed_when: true

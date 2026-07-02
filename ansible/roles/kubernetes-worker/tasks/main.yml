@@ -22,3 +22,35 @@
 - name: Fazer join no cluster
   command: "{{ join_command.content | b64decode | trim }}"
   when: node_exists.rc != 0
+
+- name: "CIS: garantir seccompDefault habilitado no kubelet (worker)"
+  lineinfile:
+    path: /var/lib/kubelet/config.yaml
+    regexp: '^seccompDefault:'
+    line: 'seccompDefault: true'
+  register: kubelet_seccomp_worker
+
+- name: Reiniciar kubelet após ajuste de seccompDefault (worker)
+  systemd:
+    name: kubelet
+    state: restarted
+  when: kubelet_seccomp_worker is changed
+
+- name: "CIS 4.2.1/4.2.3: ler configuração atual do kubelet (worker)"
+  slurp:
+    src: /var/lib/kubelet/config.yaml
+  register: kubelet_config_raw_worker
+
+- name: "CIS 4.2.1/4.2.3: validar anonymous-auth desabilitado e authorization Webhook (worker)"
+  assert:
+    that:
+      - (kubelet_config_raw_worker.content | b64decode | from_yaml).authentication.anonymous.enabled == false
+      - (kubelet_config_raw_worker.content | b64decode | from_yaml).authorization.mode == "Webhook"
+    fail_msg: "kubelet sem anonymous-auth desabilitado e/ou authorization.mode=Webhook (CIS 4.2.1/4.2.3)"
+    success_msg: "kubelet em conformidade com CIS 4.2.1 e 4.2.3"
+
+- name: Remover comando de join temporário do master (evita token residual em disco)
+  file:
+    path: /tmp/kubernetes-join-command
+    state: absent
+  delegate_to: "{{ groups['masters'][0] }}"

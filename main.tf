@@ -8,11 +8,17 @@ terraform {
       # usado abaixo (blocos `cpu {}`, `disk { slot = "scsiN" }`, `network { id = 0 }`)
       # só existe na série 3.0.x. Não há release estável (2.9.x é a última) com
       # esse schema - baixar a versão quebra `terraform validate`.
-      version = "3.0.1-rc9"
+      # >= 3.0.2-rc04 é necessário para compatibilidade com Proxmox VE 9.x,
+      # que removeu o privilégio VM.Monitor exigido pelas versões anteriores.
+      version = "3.0.2-rc07"
     }
     local = {
       source  = "hashicorp/local"
       version = "~> 2.4"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
     }
   }
 }
@@ -89,9 +95,9 @@ resource "proxmox_vm_qemu" "k8s_master" {
   sshkeys      = file(local.ssh_public_key_path)
 
   # Configurações básicas
-  agent  = 1
-  tags   = join(";", concat(local.common_tags, ["kubernetes", "master", "control-plane"]))
-  onboot = true
+  agent              = 1
+  tags               = join(";", concat(local.common_tags, ["kubernetes", "master", "control-plane"]))
+  start_at_node_boot = true
 }
 
 # VMs Worker do Kubernetes
@@ -142,9 +148,9 @@ resource "proxmox_vm_qemu" "k8s_worker" {
   sshkeys      = file(local.ssh_public_key_path)
 
   # Configurações básicas
-  agent  = 1
-  tags   = join(";", concat(local.common_tags, ["kubernetes", "worker", "worker-node"]))
-  onboot = true
+  agent              = 1
+  tags               = join(";", concat(local.common_tags, ["kubernetes", "worker", "worker-node"]))
+  start_at_node_boot = true
 
   # Dependência dos masters
   depends_on = [proxmox_vm_qemu.k8s_master]
@@ -176,4 +182,30 @@ resource "local_file" "ansible_inventory" {
     proxmox_vm_qemu.k8s_master,
     proxmox_vm_qemu.k8s_worker
   ]
+}
+
+# Executa os playbooks Ansible automaticamente após as VMs subirem e o
+# inventário ser gerado. O próprio playbook (ansible/site.yml) aguarda o
+# SSH ficar disponível antes de prosseguir, então não é preciso sleep aqui.
+# Antes disso, limpa known_hosts dos IPs do cluster: como master_ips/worker_ips
+# são fixos, recriar as VMs (destroy+apply) gera uma host key SSH nova para o
+# mesmo IP, e o known_hosts antigo derrubaria a conexão por segurança.
+# longhorn-install.yml roda em seguida, no mesmo apply: Longhorn é parte do
+# projeto, não uma etapa manual à parte.
+resource "null_resource" "run_ansible" {
+  depends_on = [
+    proxmox_vm_qemu.k8s_master,
+    proxmox_vm_qemu.k8s_worker,
+    local_file.ansible_inventory
+  ]
+
+  triggers = {
+    master_ids = join(",", proxmox_vm_qemu.k8s_master[*].id)
+    worker_ids = join(",", proxmox_vm_qemu.k8s_worker[*].id)
+  }
+
+  provisioner "local-exec" {
+    working_dir = path.module
+    command     = "./scripts/clean-ssh-keys.sh && cd ansible && ansible-playbook -i inventory site.yml && ansible-playbook -i inventory longhorn-install.yml"
+  }
 }

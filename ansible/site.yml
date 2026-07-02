@@ -1,4 +1,14 @@
 ---
+- name: Aguardar disponibilidade dos nós
+  hosts: all
+  gather_facts: no
+  become: no
+  tasks:
+    - name: Aguardar SSH ficar disponível (VMs recém-criadas)
+      ansible.builtin.wait_for_connection:
+        delay: 10
+        timeout: 300
+
 - name: Preparar todos os nós
   hosts: all
   become: yes

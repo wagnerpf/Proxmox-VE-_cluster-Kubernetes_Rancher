@@ -6,3 +6,8 @@
   systemd:
     name: ssh
     state: restarted
+
+- name: restart auditd
+  systemd:
+    name: auditd
+    state: restarted

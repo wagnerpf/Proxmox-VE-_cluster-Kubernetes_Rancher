@@ -133,6 +133,21 @@
 
   when: longhorn_set_default_storage_class
 
+- name: "CIS 5.7.x: documentar exceção de Pod Security Standards no namespace Longhorn"
+  kubernetes.core.k8s:
+    state: present
+    api_version: v1
+    kind: Namespace
+    name: "{{ longhorn_namespace }}"
+    definition:
+      metadata:
+        labels:
+          # Longhorn precisa de acesso privilegiado (hostPath, iSCSI, device
+          # access) para gerenciar storage. "privileged" aqui documenta uma
+          # exceção necessária e auditável, não uma omissão.
+          pod-security.kubernetes.io/enforce: privileged
+  run_once: true
+
 - name: "Validar instalação do Longhorn"
   block:
     - name: "Verificar pods do Longhorn em execução"

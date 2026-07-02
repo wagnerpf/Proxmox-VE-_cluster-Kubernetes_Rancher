@@ -438,7 +438,7 @@ terraform destroy
 
 - **Docker**: Container runtime
 - **Kubernetes 1.28**: Orquestrador de containers
-- **Flannel**: Plugin de rede para pods
+- **Canal (Flannel + Calico)**: rede de pods via Flannel, enforcement de NetworkPolicy via Calico/Felix
 - **containerd**: Container runtime interface
 
 ## 🆘 **Troubleshooting**

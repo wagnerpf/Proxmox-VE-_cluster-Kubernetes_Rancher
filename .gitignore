@@ -12,6 +12,8 @@ terraform.tfvars
 *.pem
 *.key
 *.crt
+kubeconfig
+./kubeconfig
 
 # Inventário gerado pelo Terraform (contém IPs e usuário reais)
 ansible/inventory
@@ -38,3 +40,11 @@ logs/
 # Local environment
 .env
 .env.local
+
+# Claude Code generated files
+CLAUDE.md
+.claude/
+
+# Prompts / meta-instruções de IA (não fazem parte do código do projeto)
+instructions.md
+docs/prompts/

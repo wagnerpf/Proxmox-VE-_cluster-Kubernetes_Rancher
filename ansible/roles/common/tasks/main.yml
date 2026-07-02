@@ -4,6 +4,20 @@
     update_cache: yes
     cache_valid_time: 3600
 
+- name: Atualizar pacotes do sistema operacional
+  apt:
+    upgrade: safe
+
+- name: "Verificar se reboot é necessário (ex: atualização de kernel)"
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required_file
+
+- name: Reiniciar e aguardar o nó voltar, se necessário
+  reboot:
+    reboot_timeout: 300
+  when: reboot_required_file.stat.exists
+
 - name: Instalar pacotes básicos
   apt:
     name:
@@ -15,6 +29,10 @@
       - software-properties-common
       - python3-pip
       - jq
+      - auditd
+      - audispd-plugins
+      - chrony
+      - libpam-pwquality
     state: present
 
 - name: Desabilitar swap
@@ -41,18 +59,88 @@
     - overlay
     - br_netfilter
 
+- name: "CIS 1.1.1.x: desabilitar sistemas de arquivo não utilizados"
+  copy:
+    content: |
+      install cramfs /bin/false
+      install freevxfs /bin/false
+      install jffs2 /bin/false
+      install hfs /bin/false
+      install hfsplus /bin/false
+      install squashfs /bin/false
+      install udf /bin/false
+      install usb-storage /bin/false
+    dest: /etc/modprobe.d/cis-blacklist.conf
+
 - name: Configurar parâmetros sysctl
   copy:
     content: |
+      # Requeridos pelo Kubernetes (CNI baseado em bridge)
       net.bridge.bridge-nf-call-iptables  = 1
       net.bridge.bridge-nf-call-ip6tables = 1
+      # ip_forward=1 é exceção aceita ao CIS 3.1.1, exigida pelo Kubernetes
       net.ipv4.ip_forward                 = 1
+
+      # CIS 3.3.x: proteção contra spoofing e redirecionamento malicioso
+      net.ipv4.conf.all.accept_redirects     = 0
+      net.ipv4.conf.default.accept_redirects = 0
+      net.ipv4.conf.all.send_redirects       = 0
+      net.ipv4.conf.default.send_redirects   = 0
+      net.ipv4.conf.all.accept_source_route     = 0
+      net.ipv4.conf.default.accept_source_route = 0
+      net.ipv4.conf.all.log_martians     = 1
+      net.ipv4.conf.default.log_martians = 1
+      net.ipv4.icmp_echo_ignore_broadcasts = 1
+      net.ipv4.tcp_syncookies = 1
+      fs.suid_dumpable = 0
     dest: /etc/sysctl.d/k8s.conf
   notify: reload sysctl
 
 - name: Configurar timezone
   timezone:
     name: America/Sao_Paulo
+
+- name: Habilitar e iniciar chrony (sincronização de horário)
+  systemd:
+    name: chrony
+    enabled: yes
+    state: started
+
+- name: "CIS 5.4.x: configurar política de qualidade de senha (pwquality)"
+  lineinfile:
+    path: /etc/security/pwquality.conf
+    regexp: "^#?\\s*{{ item.key }}\\s*="
+    line: "{{ item.key }} = {{ item.value }}"
+  loop:
+    - { key: "minlen", value: "14" }
+    - { key: "dcredit", value: "-1" }
+    - { key: "ucredit", value: "-1" }
+    - { key: "lcredit", value: "-1" }
+    - { key: "ocredit", value: "-1" }
+    - { key: "retry", value: "3" }
+
+- name: "CIS 5.4.x: habilitar pam_pwquality no stack de senha"
+  lineinfile:
+    path: /etc/pam.d/common-password
+    regexp: '^password\s+requisite\s+pam_pwquality\.so'
+    line: "password        requisite                      pam_pwquality.so retry=3"
+    insertbefore: '^password\s+\[success=1 default=ignore\]\s+pam_unix\.so'
+
+- name: "CIS 5.4.x: configurar bloqueio de conta por tentativas falhas (faillock)"
+  copy:
+    content: |
+      deny = 5
+      unlock_time = 900
+    dest: /etc/security/faillock.conf
+
+- name: "CIS 5.4.x: habilitar pam_faillock no stack de autenticação"
+  blockinfile:
+    path: /etc/pam.d/common-auth
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - pam_faillock"
+    insertafter: '^auth\s+\[success=1 default=ignore\]\s+pam_unix\.so'
+    block: |
+      auth    [default=die]   pam_faillock.so authfail
+      auth    sufficient      pam_faillock.so authsucc
 
 - name: "Hardening SSH: desabilitar autenticação por senha"
   replace:
@@ -67,6 +155,77 @@
     regexp: '^#?\s*PermitRootLogin\s+.*'
     replace: 'PermitRootLogin no'
   notify: restart sshd
+
+- name: "Hardening SSH: limitar tentativas de autenticação"
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?\s*MaxAuthTries\s+.*'
+    replace: 'MaxAuthTries 4'
+  notify: restart sshd
+
+- name: "Hardening SSH: timeout de sessão inativa"
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?\s*ClientAliveInterval\s+.*'
+    replace: 'ClientAliveInterval 300'
+  notify: restart sshd
+
+- name: "Hardening SSH: número máximo de checagens de vida da conexão"
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?\s*ClientAliveCountMax\s+.*'
+    replace: 'ClientAliveCountMax 3'
+  notify: restart sshd
+
+- name: "Hardening SSH: tempo de graça do login"
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?\s*LoginGraceTime\s+.*'
+    replace: 'LoginGraceTime 60'
+  notify: restart sshd
+
+- name: "Hardening SSH: desabilitar X11 forwarding"
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?\s*X11Forwarding\s+.*'
+    replace: 'X11Forwarding no'
+  notify: restart sshd
+
+- name: "CIS 1.8.x: banner de aviso legal (issue e issue.net)"
+  copy:
+    content: |
+      Acesso restrito a usuários autorizados. Todas as ações são registradas e auditadas.
+    dest: "{{ item }}"
+  loop:
+    - /etc/issue
+    - /etc/issue.net
+
+- name: "Hardening SSH: exibir banner de aviso legal"
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?\s*Banner\s+.*'
+    replace: 'Banner /etc/issue.net'
+  notify: restart sshd
+
+- name: "CIS 4.1: configurar regras do auditd"
+  copy:
+    content: |
+      -w /etc/passwd -p wa -k identity
+      -w /etc/group -p wa -k identity
+      -w /etc/shadow -p wa -k identity
+      -w /etc/gshadow -p wa -k identity
+      -w /etc/sudoers -p wa -k scope
+      -w /etc/sudoers.d/ -p wa -k scope
+      -w /var/log/auth.log -p wa -k auth_log
+      -w /etc/ssh/sshd_config -p wa -k sshd_config
+    dest: /etc/audit/rules.d/hardening.rules
+  notify: restart auditd
+
+- name: "CIS 4.1: habilitar e iniciar auditd"
+  systemd:
+    name: auditd
+    enabled: yes
+    state: started
 
 - name: Instalar UFW
   apt:
@@ -100,6 +259,10 @@
   community.general.ufw:
     direction: outgoing
     default: allow
+
+- name: "Firewall: registrar pacotes descartados"
+  community.general.ufw:
+    logging: 'on'
 
 - name: "Firewall: habilitar UFW"
   community.general.ufw:
