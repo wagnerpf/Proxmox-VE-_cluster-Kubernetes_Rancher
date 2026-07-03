@@ -24,6 +24,7 @@
 |---------|-----------|--------------|
 | **[README.md](README.md)** | Documentação principal completa | Todos os usuários |
 | **[CLUSTER-QUICK-GUIDE.md](CLUSTER-QUICK-GUIDE.md)** | Guia de instalação expressa | Usuários experientes |
+| **[APP-DEPLOYMENT-GUIDE.md](APP-DEPLOYMENT-GUIDE.md)** | Manual de deploy de aplicações no cluster já provisionado | DevOps, quem for subir apps |
 | **[terraform.tfvars.example](terraform.tfvars.example)** | Template de configuração | Todos os usuários |
 
 ### 🏗️ **Arquitetura e Conceitos**
